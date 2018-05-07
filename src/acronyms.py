@@ -1,6 +1,6 @@
 # Mark Evers
 # 5/3/18
-# acronym_builder.py
+# acronyms.py
 # Script for building a dictionary of acronyms.
 
 
@@ -10,7 +10,8 @@ import string
 
 # These constants are for when it has to search for the acronym
 UNMATCHED_ACRONYM_PRE_SEARCH_LEN = 3  # how many words before the believed first word to search
-UNMATCHED_ACRONYM_LEN = 5  # how many capitalized letters to include when above doesn't work
+UNMATCHED_ACRONYM_LEN = 7  # how many capitalized letters to include when above doesn't work
+MAX_ACRONYM_LEN = 7  # any longer than this will be ignored
 
 
 
@@ -31,6 +32,21 @@ def add_to_acronyms(acronyms, acronym, definition):
 
 
 
+def add_multiple_to_acronyms(acronyms, new_acronyms):
+
+    for acronym, definition in new_acronyms.items():
+        add_to_acronyms(acronyms, acronym, definition)
+
+
+
+def print_acronyms(acronyms):
+
+    print("\nACRONYM DICTIONARY")
+    for k, v in acronyms.items():
+        print("{0}:".format(k).ljust(10), v)
+
+
+
 def first_letter_search(acronym, acronym_i, n_letters, tokens):
 
     found_match = False
@@ -38,11 +54,18 @@ def first_letter_search(acronym, acronym_i, n_letters, tokens):
     # search backwards for until the first letter of the token and first letter of the acronym match, or until UNMATCHED_ACRONYM_PRE_SEARCH_LEN is reached
     for x in range(1, UNMATCHED_ACRONYM_PRE_SEARCH_LEN + 1):
 
-        # break if the first letter of this token is the first letter of the acronym
+        # search backwards: break if the first letter of this token is the first letter of the acronym
         if tokens[acronym_i - n_letters - x].upper()[0] == acronym[0]:
             found_match = True
-            definition_tokens = tokens[acronym_i - n_letters - x:acronym_i]
+            definition_tokens = tokens[(acronym_i - n_letters - x):acronym_i]
             break
+
+        # search forwards: break if the first letter of this token is the first letter of the acronym
+        if acronym_i - n_letters + x < acronym_i - 2:  # only if it's at least 2 words ahead of the acronym
+            if tokens[acronym_i - n_letters + x].upper()[0] == acronym[0]:
+                found_match = True
+                definition_tokens = tokens[(acronym_i - n_letters + x):acronym_i]
+                break
 
         # break if we reached the beginning of the sentence
         if acronym_i - n_letters - x == 0:
@@ -94,65 +117,100 @@ def acronyms_from_doc(doc):
 
 
 
+def check_first_letters(acronym, definition_tokens):
+
+    if  len(acronym) != len(definition_tokens):
+        return False
+
+    for letter, definition_token in zip(acronym.upper(), definition_tokens):
+
+        definition_token = definition_token.upper()
+
+        if not definition_token.startswith(letter):
+            if letter == "&" and definition_token != "AND":
+                return False
+
+    return True
+
+
+
+def parse_acronym(acronym, acronym_i, tokens):
+
+    n_letters = len(acronym)
+
+    # SANITY CHECKS
+    # make sure it's more than one letter long
+    if n_letters < 2:
+        return False
+    # make sure it's not too long
+    if n_letters > MAX_ACRONYM_LEN:
+        return False
+    # make sure it contains at least one capital letter
+    if re.match(r"[^A-Z]+", acronym):
+        return False
+
+    start_i = acronym_i - n_letters
+    if start_i < 0:
+        start_i = 0
+    definition_tokens = tokens[start_i:acronym_i]
+
+    # if it matches straight away, just return
+    if len(definition_tokens) == n_letters:
+        if reduce(lambda result, letter_enum: result and definition_tokens[letter_enum[0]].upper().startswith(letter_enum[1]), enumerate(acronym)):
+            return string.capwords(" ".join(definition_tokens))
+
+    # sanity check: make sure the acronym matches the first letter in each word
+    if len(definition_tokens) < n_letters \
+            or not reduce(
+        lambda result, letter_enum: result and definition_tokens[letter_enum[0]].upper().startswith(letter_enum[1]),
+        enumerate(acronym)):
+
+        print("WARNING -> Acronym does not match:", acronym, definition_tokens)
+
+        # search for the first letter in nearby words
+        search_result = first_letter_search(acronym, acronym_i, n_letters, tokens)
+
+        # couldn't find the first letter nearby, let's try just searching for capital words
+        if not search_result:
+            search_result = capital_words_search(acronym_i, tokens)
+
+        if not search_result:
+            print("  !!!!! -> Could not find a good match, keeping original:", definition_tokens)
+        else:
+            print("    +ok -> Best match:", search_result)
+            definition_tokens = search_result
+
+    definition = string.capwords(" ".join(definition_tokens))
+
+
 def acronyms_from_sentence(sentence):
 
     acronyms = {}
-    tokens = sentence.split()
+    tokens = re.split(r"[\s/\-\+,\\\"]+", sentence)
 
 
     for i, token in enumerate(tokens):
 
         # matches strings enclosed in parentheses similar to "(*)"
-        # acronym regex = upper case letters, numbers, "-", "&"
-        matchObj = re.match(r"\(([A-Z0-9\-&]+)\)", token)
+        # acronym regex = lowercase letters, uppercase letters, numbers, "-", "&"
+        match_obj = re.match(r"\(([a-zA-Z0-9\-&]+)\)$", token)
 
-        if matchObj:
+        if match_obj:
 
-            acronym = matchObj.group(1)
-            n_letters = len(acronym)
-
-            # sanity check: make sure it's more than one letter long
-            if n_letters < 2:
-                continue
-
-            # sanity check: make sure it contains at least one letter
-            if re.match(r"[^A-Z]+", acronym):
-                continue
-
-
-            definition_tokens = tokens[i - n_letters:i]
-
-            # sanity check: make sure the acronym matches the first letter in each word
-            if not reduce(lambda result, letter_enum: result and definition_tokens[letter_enum[0]].upper().startswith(letter_enum[1]), enumerate(acronym)):
-
-                print("WARNING -> Acronym does not match:", acronym, definition_tokens)
-
-                # search for the first letter in nearby words
-                search_result = first_letter_search(acronym, i, n_letters, tokens)
-
-                # couldn't find the first letter nearby, let's try just searching for capital words
-                if not search_result:
-                    search_result = capital_words_search(i, tokens)
-
-                if not search_result:
-                    print("    bad -> Could not find a good match...")
-                else:
-                    print("     ok -> Best match:", search_result)
-                    definition_tokens = search_result
-
-
-            definition = string.capwords(" ".join(definition_tokens))
+            acronym = match_obj.group(1)
+            definition = parse_acronym(acronym, i, tokens)
             add_to_acronyms(acronyms, acronym, definition)
 
 
         else:
-            matchObj = re.match(r"\((.+)\)", token)
-            if matchObj:
-                inside_parens = matchObj.group(1)
-                print("Unknown parentheses:", inside_parens)
+            match_obj = re.match(r"\((.+)\)", token)
+            if match_obj:
+                inside_parens = match_obj.group(1)
+                print("Unknown parentheses:", token)
 
 
     return acronyms
+
 
 
 
@@ -163,10 +221,8 @@ def main():
         doc = f.read()
 
     acronyms = acronyms_from_doc(doc)
+    print_acronyms(acronyms)
 
-    print("\nACRONYM DICTIONARY")  # newline
-    for k, v in acronyms.items():
-        print("{0}:".format(k).ljust(10), v)
 
 
 if __name__ == "__main__":
