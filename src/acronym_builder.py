@@ -14,7 +14,7 @@ cursor = conn.cursor()
 q = """select text
 from import.fbo_files
 where ts_text_simple @@ to_tsquery('agile <-> software <-> development')
-limit 10"""
+limit 100"""
 
 
 cursor.execute(q)

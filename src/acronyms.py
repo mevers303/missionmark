@@ -4,7 +4,6 @@
 # Script for building a dictionary of acronyms.
 
 
-from functools import reduce
 import re
 import string
 
@@ -95,18 +94,22 @@ def first_letter_search(acronym, acronym_i, n_letters, tokens):
     for x in range(1, UNMATCHED_ACRONYM_FIRSTLETTER_SEARCH_LEN + 1):
 
         # search backwards: break if the first letter of this token is the first letter of the acronym
-        if acronym_i - n_letters - x >= 0:
-            if tokens[acronym_i - n_letters - x].upper()[0] == acronym[0]:
-                found_match = True
-                definition_tokens = tokens[(acronym_i - n_letters - x):acronym_i]
-                break
+        backward_i = acronym_i - n_letters - x
+        if backward_i - x >= 0:  # don't look past the 0 index
+            if len(tokens[acronym_i - n_letters - x]):  # make sure it's not an empty string
+                if tokens[acronym_i - n_letters - x].upper()[0] == acronym[0]:
+                    found_match = True
+                    definition_tokens = tokens[(acronym_i - n_letters - x):acronym_i]
+                    break
 
         # search forwards: break if the first letter of this token is the first letter of the acronym
-        if acronym_i - n_letters + x < acronym_i - 1:  # only if it's at least 1 words ahead of the acronym
-            if tokens[acronym_i - n_letters + x].upper()[0] == acronym[0]:
-                found_match = True
-                definition_tokens = tokens[(acronym_i - n_letters + x):acronym_i]
-                break
+        forward_i = acronym_i - n_letters + x
+        if forward_i < acronym_i and forward_i >= 0:  # only if it's at least 1 words ahead of the acronym
+            if len(tokens[forward_i]):  # make sure it's not an empty string
+                if tokens[forward_i].upper()[0] == acronym[0]:
+                    found_match = True
+                    definition_tokens = tokens[forward_i:acronym_i]
+                    break
 
 
     if found_match:
@@ -135,11 +138,14 @@ def capital_words_search(acronym_i, tokens):
     # let's just take up to UNMATCHED_ACRONYM_CAPITALS_SEARCH_LEN capitalized words before
     for x in range(1, UNMATCHED_ACRONYM_CAPITALS_SEARCH_LEN + 1):
 
-        if tokens[acronym_i - x][0] in string.ascii_uppercase:
+        token_i = acronym_i - x
+
+        if tokens[token_i][0] in string.ascii_uppercase:
             found_match = True
         else:
-            tokens_start_i = acronym_i - x + 1
-            break
+            if tokens[token_i] not in {"of", "and"}:
+                tokens_start_i = token_i + 1
+                break
 
         # break if we reached the beginning of the sequence
         if acronym_i - x == 0:
@@ -170,8 +176,9 @@ def check_first_letters(acronym, definition_tokens):
         definition_token = definition_token.upper()
 
         if not definition_token.startswith(letter):
-            if letter == "&" and definition_token != "AND":
-                return False
+            if letter == "&" and definition_token == "AND":
+                continue
+            return False
 
     return True
 
@@ -209,7 +216,7 @@ def parse_acronym(acronym, acronym_i, tokens):
 
     # if it matches straight away, just return
     if check_first_letters(acronym, definition_tokens):
-        return string.capwords(" ".join(definition_tokens))
+        return " ".join(definition_tokens)
 
 
     print("WARNING -> Acronym does not match:", acronym, definition_tokens)
@@ -223,10 +230,10 @@ def parse_acronym(acronym, acronym_i, tokens):
 
     if not search_result:
         print("  !!!!! -> Could not find a good match, keeping original:", definition_tokens)
-        return string.capwords(" ".join(definition_tokens))
+        return " ".join(definition_tokens)
     else:
         print("    +ok -> Best match:", search_result)
-        return string.capwords(" ".join(search_result))
+        return " ".join(search_result)
 
 
 
