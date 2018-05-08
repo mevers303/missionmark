@@ -164,7 +164,7 @@ def capital_words_search(acronym_i, tokens):
 
         token_i = acronym_i - x
 
-        if tokens[token_i][0] in string.ascii_uppercase:
+        if len(tokens[token_i]) and tokens[token_i][0] in string.ascii_uppercase:
             found_match = True
             tokens_start_i = token_i
         else:
