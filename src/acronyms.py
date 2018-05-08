@@ -66,7 +66,7 @@ def first_letter_search(acronym, acronym_i, n_letters, tokens):
                 break
 
         # search forwards: break if the first letter of this token is the first letter of the acronym
-        if acronym_i - n_letters + x < acronym_i - 1:  # only if it's at least 2 words ahead of the acronym
+        if acronym_i - n_letters + x < acronym_i - 1:  # only if it's at least 1 words ahead of the acronym
             if tokens[acronym_i - n_letters + x].upper()[0] == acronym[0]:
                 found_match = True
                 definition_tokens = tokens[(acronym_i - n_letters + x):acronym_i]
@@ -184,11 +184,13 @@ def acronyms_from_sentence(sentence):
 
         # matches strings enclosed in parentheses similar to "(*)"
         # acronym regex = lowercase letters, uppercase letters, numbers, "-", "&"
-        match_obj = re.match(r"\(([a-zA-Z0-9\-&]+)\)", token)
+        match_obj = re.match(r"\(([a-zA-Z0-9\-&\']+)\)", token)
 
         if match_obj:
 
             acronym = match_obj.group(1)
+            acronym = acronym.replace("'s", "")  # remove bad grammar
+
             definition = parse_acronym(acronym, i, tokens)
             if definition:
                 add_to_acronyms(acronyms, acronym, definition)
