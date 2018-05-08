@@ -70,6 +70,30 @@ def print_acronyms(acronyms):
 
 
 
+def check_first_letters(acronym, definition_tokens):
+    """
+    Checks to see if the words immediately before the acronym are a perfect match for the letters of the acronym.
+    :param acronym: The acronym to be checked.
+    :param definition_tokens: The tokens of the words to be checked against.
+    :return: True if it matches, False if it does not.
+    """
+
+    if  len(acronym) != len(definition_tokens):
+        return False
+
+    for letter, definition_token in zip(acronym.upper(), definition_tokens):
+
+        definition_token = definition_token.upper()
+
+        if not definition_token.startswith(letter):
+            if letter == "&" and definition_token == "AND":
+                continue
+            return False
+
+    return True
+
+
+
 def first_letter_search(acronym, acronym_i, n_letters, tokens):
     """
     Function for looking for the best definition for an acronym based on the first letter of the acronym.  Will search
@@ -91,7 +115,7 @@ def first_letter_search(acronym, acronym_i, n_letters, tokens):
 
     # search backwards for until the first letter of the token and first letter of the acronym match, or until
     # UNMATCHED_ACRONYM_FIRSTLETTER_SEARCH_LEN is reached
-    for x in range(1, UNMATCHED_ACRONYM_FIRSTLETTER_SEARCH_LEN + 1):
+    for x in range(UNMATCHED_ACRONYM_FIRSTLETTER_SEARCH_LEN + 1):
 
         # search backwards: break if the first letter of this token is the first letter of the acronym
         backward_i = acronym_i - n_letters - x
@@ -142,13 +166,14 @@ def capital_words_search(acronym_i, tokens):
 
         if tokens[token_i][0] in string.ascii_uppercase:
             found_match = True
+            tokens_start_i = token_i
         else:
             if tokens[token_i] not in {"of", "and"}:
                 tokens_start_i = token_i + 1
                 break
 
         # break if we reached the beginning of the sequence
-        if acronym_i - x == 0:
+        if token_i == 0:
             tokens_start_i = 0
             break
 
@@ -157,30 +182,6 @@ def capital_words_search(acronym_i, tokens):
         return tokens[tokens_start_i:acronym_i]
     else:
         return False
-
-
-
-def check_first_letters(acronym, definition_tokens):
-    """
-    Checks to see if the words immediately before the acronym are a perfect match for the letters of the acronym.
-    :param acronym: The acronym to be checked.
-    :param definition_tokens: The tokens of the words to be checked against.
-    :return: True if it matches, False if it does not.
-    """
-
-    if  len(acronym) != len(definition_tokens):
-        return False
-
-    for letter, definition_token in zip(acronym.upper(), definition_tokens):
-
-        definition_token = definition_token.upper()
-
-        if not definition_token.startswith(letter):
-            if letter == "&" and definition_token == "AND":
-                continue
-            return False
-
-    return True
 
 
 
