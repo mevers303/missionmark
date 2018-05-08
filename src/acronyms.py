@@ -168,7 +168,7 @@ def capital_words_search(acronym_i, tokens):
             found_match = True
             tokens_start_i = token_i
         else:
-            if tokens[token_i] not in {"of", "and"}:
+            if tokens[token_i] not in {"of", "and", "to", "the", "in"}:
                 tokens_start_i = token_i + 1
                 break
 
