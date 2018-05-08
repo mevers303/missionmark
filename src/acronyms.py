@@ -9,13 +9,22 @@ import re
 import string
 
 # These constants are for when it has to search for the acronym
-UNMATCHED_ACRONYM_PRE_SEARCH_LEN = 5  # how many words before the believed first word to search
-UNMATCHED_ACRONYM_LEN = 7  # how many capitalized letters to include when above doesn't work
+UNMATCHED_ACRONYM_FIRSTLETTER_SEARCH_LEN = 5  # how many words before the believed first word to search
+UNMATCHED_ACRONYM_CAPITALS_SEARCH_LEN = 7  # how many capitalized letters to include when above doesn't work
 MAX_ACRONYM_LEN = 7  # any longer than this will be ignored
 
 
 
 def add_to_acronyms(acronyms, acronym, definition):
+    """
+    Adds an acronym and it's definition to a dictionary of acronyms.  If there is an overlap, the newer acronym is
+    numbered (ie "USA" -> "USA (2)").
+    :param acronyms: The dictionary of acronyms.  Passed by reference by default, so it will be modified in place.
+    :param acronym: The acronym to be added.
+    :param definition: The definition of the acronym to be added.
+    :return: The acronym dictionary, but it is not necessary to reassign your local variable because it is modified in
+             place.
+    """
 
     key = acronym
     x = 2
@@ -29,17 +38,32 @@ def add_to_acronyms(acronyms, acronym, definition):
         x += 1
 
     acronyms[key] = definition
+    return acronyms
 
 
 
 def add_multiple_to_acronyms(acronyms, new_acronyms):
+    """
+    Merges two acronym dictionaries.  Overlaps are renamed.
+    :param acronyms: The acronyms will be added to this dictionary.
+    :param new_acronyms: The dictionary of acronyms to be added.
+    :return: The acronym dictionary, but it is not necessary to reassign your local variable because it is modified in
+             place.
+    """
 
     for acronym, definition in new_acronyms.items():
         add_to_acronyms(acronyms, acronym, definition)
 
+    return acronyms
+
 
 
 def print_acronyms(acronyms):
+    """
+    Prints a acronym dictionary to the console.
+    :param acronyms: The dictionary of acronyms.
+    :return: None
+    """
 
     print("\nACRONYM DICTIONARY")
     for k, v in acronyms.items():
@@ -48,6 +72,17 @@ def print_acronyms(acronyms):
 
 
 def first_letter_search(acronym, acronym_i, n_letters, tokens):
+    """
+    Function for looking for the best definition for an acronym based on the first letter of the acronym.  Will search
+    forwards and backwards for a length of UNMATCHED_ACRONYM_FIRSTLETTER_SEARCH_LEN for words that start with the first
+    letter of the acronym.  It starts with the word that should have been the first based on the length of the acronym.
+    IE if the acronym is 3 letters long, it starts 3 words backwards.
+    :param acronym: The acronym to match the first letter of.
+    :param acronym_i: The index of the acronym in the tokens (usually the sentence).
+    :param n_letters: The length of the acronym.
+    :param tokens: The tokens of the sentence (or doc or whatever).
+    :return: False if no match is found.  Otherwise it returns a list of the tokens it believes is the match.
+    """
 
     # sanity check: if it's at the beginning, we're out of luck
     if acronym_i == 0:
@@ -55,8 +90,9 @@ def first_letter_search(acronym, acronym_i, n_letters, tokens):
 
     found_match = False
 
-    # search backwards for until the first letter of the token and first letter of the acronym match, or until UNMATCHED_ACRONYM_PRE_SEARCH_LEN is reached
-    for x in range(1, UNMATCHED_ACRONYM_PRE_SEARCH_LEN + 1):
+    # search backwards for until the first letter of the token and first letter of the acronym match, or until
+    # UNMATCHED_ACRONYM_FIRSTLETTER_SEARCH_LEN is reached
+    for x in range(1, UNMATCHED_ACRONYM_FIRSTLETTER_SEARCH_LEN + 1):
 
         # search backwards: break if the first letter of this token is the first letter of the acronym
         if acronym_i - n_letters - x >= 0:
@@ -81,6 +117,13 @@ def first_letter_search(acronym, acronym_i, n_letters, tokens):
 
 
 def capital_words_search(acronym_i, tokens):
+    """
+    Searches for the best match of the definition by looking for capitalized words.  Simply searches backwards up to
+    UNMATCHED_ACRONYM_CAPITALS_SEARCH_LEN words far from the acronym
+    :param acronym_i: The index of the acronym in the tokens.
+    :param tokens: The word tokens (usually the sentence).
+    :return: False if no match is found.  Otherwise it returns a list of tokens it believes is the definition.
+    """
 
     # sanity check: if it's at the beginning, we're out of luck
     if acronym_i == 0:
@@ -89,8 +132,8 @@ def capital_words_search(acronym_i, tokens):
     found_match = False
     tokens_start_i = 0
 
-    # let's just take up to UNMATCHED_ACRONYM_LEN capitalized words before
-    for x in range(1, UNMATCHED_ACRONYM_LEN + 1):
+    # let's just take up to UNMATCHED_ACRONYM_CAPITALS_SEARCH_LEN capitalized words before
+    for x in range(1, UNMATCHED_ACRONYM_CAPITALS_SEARCH_LEN + 1):
 
         if tokens[acronym_i - x][0] in string.ascii_uppercase:
             found_match = True
@@ -112,6 +155,12 @@ def capital_words_search(acronym_i, tokens):
 
 
 def check_first_letters(acronym, definition_tokens):
+    """
+    Checks to see if the words immediately before the acronym are a perfect match for the letters of the acronym.
+    :param acronym: The acronym to be checked.
+    :param definition_tokens: The tokens of the words to be checked against.
+    :return: True if it matches, False if it does not.
+    """
 
     if  len(acronym) != len(definition_tokens):
         return False
@@ -129,6 +178,13 @@ def check_first_letters(acronym, definition_tokens):
 
 
 def parse_acronym(acronym, acronym_i, tokens):
+    """
+    Attempts to extract the definition of an acronym from a list of tokens (a sentence/doc).
+    :param acronym: The acronym to be defined.
+    :param acronym_i: The index of the acronym in the list of tokens.
+    :param tokens: The list of tokens to search for the definition in (the sentence).
+    :return: False if it doesn't pass the sanity checks.  Otherwise it will return the definition.
+    """
 
     n_letters = len(acronym)
 
@@ -175,6 +231,11 @@ def parse_acronym(acronym, acronym_i, tokens):
 
 
 def acronyms_from_sentence(sentence):
+    """
+    Extracts an acronym dictionary from a sentence (stripped of punctuation).
+    :param sentence: A sentence string (stripped of punctuation).
+    :return: A dictionary of acronyms.
+    """
 
     acronyms = {}
     tokens = re.split(r"[\s/\-\+,\\\"\:\;\[\]]+", sentence)
@@ -208,6 +269,11 @@ def acronyms_from_sentence(sentence):
 
 
 def acronyms_from_doc(doc):
+    """
+    Extracts an acronym dictionary from a document.  Splits it into strings and parses each individually.
+    :param doc: A document as a string.
+    :return: A dictionary of acronyms.
+    """
 
     doc_acronyms = {}
     sentences = re.split(r"[\.\?\!]\s+", doc)
