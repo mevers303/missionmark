@@ -63,3 +63,8 @@ def get_all_data():
     debug(" -> Corpus loaded")
 
     return ids, docs
+
+
+if __name__ == "__main__":
+
+    ids, corpus = get_all_data()
