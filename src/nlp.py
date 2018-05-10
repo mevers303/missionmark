@@ -115,10 +115,10 @@ def summarize_doc(doc, vectorizer, n_sentences = 10):
     """
 
     sentences = split_sentences(doc)
-    sentence_tfidf = vectorizer.transform(sentences).toarray()
+    sentence_tfidf = vectorizer.transform(sentences)
     # sentences_wordcounts = np.count_nonzero(sentence_tfidf, axis=1)
 
-    sentence_scores = np.sum(sentence_tfidf, axis=1).flatten()  # / sentences_wordcounts
+    sentence_scores = sentence_tfidf.sum(axis=1).flatten()  # / sentences_wordcounts
     best_sentences = [f"{'*' * 120}\n{'*' * 120}\n{'*' * 120}\n{sentences[i]}." for i in np.sort(np.argsort(sentence_scores)[:-n_sentences - 1:-1])]
 
     return "\n\n\n".join(best_sentences)
