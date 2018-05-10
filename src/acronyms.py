@@ -6,6 +6,7 @@
 
 import re
 import string
+from src.data import split_sentences
 
 # These constants are for when it has to search for the acronym
 UNMATCHED_ACRONYM_FIRSTLETTER_SEARCH_LEN = 5  # how many words before the believed first word to search
@@ -120,20 +121,18 @@ def first_letter_search(acronym, acronym_i, n_letters, tokens):
         # search backwards: break if the first letter of this token is the first letter of the acronym
         backward_i = acronym_i - n_letters - x
         if backward_i - x >= 0:  # don't look past the 0 index
-            if len(tokens[acronym_i - n_letters - x]):  # make sure it's not an empty string
-                if tokens[acronym_i - n_letters - x].upper()[0] == acronym[0]:
-                    found_match = True
-                    definition_tokens = tokens[(acronym_i - n_letters - x):acronym_i]
-                    break
+            if tokens[acronym_i - n_letters - x].upper()[0] == acronym[0]:
+                found_match = True
+                definition_tokens = tokens[(acronym_i - n_letters - x):acronym_i]
+                break
 
         # search forwards: break if the first letter of this token is the first letter of the acronym
         forward_i = acronym_i - n_letters + x
         if forward_i < acronym_i and forward_i >= 0:  # only if it's at least 1 words ahead of the acronym
-            if len(tokens[forward_i]):  # make sure it's not an empty string
-                if tokens[forward_i].upper()[0] == acronym[0]:
-                    found_match = True
-                    definition_tokens = tokens[forward_i:acronym_i]
-                    break
+            if tokens[forward_i].upper()[0] == acronym[0]:
+                found_match = True
+                definition_tokens = tokens[forward_i:acronym_i]
+                break
 
 
     if found_match:
@@ -164,7 +163,7 @@ def capital_words_search(acronym_i, tokens):
 
         token_i = acronym_i - x
 
-        if len(tokens[token_i]) and tokens[token_i][0] in string.ascii_uppercase:
+        if tokens[token_i][0] in string.ascii_uppercase:
             found_match = True
             tokens_start_i = token_i
         else:
@@ -220,8 +219,6 @@ def parse_acronym(acronym, acronym_i, tokens):
         return " ".join(definition_tokens)
 
 
-    print("WARNING -> Acronym does not match:", acronym, definition_tokens)
-
     # search for the first letter in nearby words
     search_result = first_letter_search(acronym, acronym_i, n_letters, tokens)
 
@@ -230,46 +227,52 @@ def parse_acronym(acronym, acronym_i, tokens):
         search_result = capital_words_search(acronym_i, tokens)
 
     if not search_result:
-        print("  !!!!! -> Could not find a good match, keeping original:", definition_tokens)
+        print("WARNING -> Acronym does not match:", acronym, definition_tokens)
+        # print("  !!!!! -> Could not find a good match, keeping original:", definition_tokens)
         return " ".join(definition_tokens)
     else:
-        print("    +ok -> Best match:", search_result)
+        # print("    +ok -> Best match:", search_result)
         return " ".join(search_result)
 
 
 
 def acronyms_from_sentence(sentence):
     """
-    Extracts an acronym dictionary from a sentence (stripped of punctuation).
+    Extracts an acronym dictionary from a sentence.
     :param sentence: A sentence string (stripped of punctuation).
     :return: A dictionary of acronyms.
     """
 
     acronyms = {}
-    tokens = re.split(r"[\s/\-\+,\\\"\:\;\[\]]+", sentence)
+    tokens = [token for token in re.split(r"[\s/\-\+,\\\"\:\;\[\]]+", sentence) if token]  # list comprehension removes empty strings
 
 
     for i, token in enumerate(tokens):
 
         # matches strings enclosed in parentheses similar to "(*)"
         # acronym regex = lowercase letters, uppercase letters, numbers, "-", "&"
-        match_obj = re.match(r"\(([a-zA-Z0-9\-&\']+)\)", token)
+        match_obj = re.match(r"\(([a-zA-Z0-9\-&\']+)(?:\(s\))*\)", token)
 
         if match_obj:
 
             acronym = match_obj.group(1)
             acronym = acronym.replace("'s", "")  # remove bad grammar
+            acronym = acronym.replace("(s)", "")  # remove bad grammar
+
+            # skip strings that only have one capital letter at the beginning
+            if re.match(r"[A-Z][a-z]{2,}", acronym):
+                continue
 
             definition = parse_acronym(acronym, i, tokens)
             if definition:
                 add_to_acronyms(acronyms, acronym, definition)
 
-
         else:
             match_obj = re.match(r"\((.+)\)", token)
             if match_obj:
                 inside_parens = match_obj.group(1)
-                print("Unknown parentheses:", token)
+                if not re.match(r"[0-9\.%#\-]+|\.[a-zA-Z]{3,4}|[a-z]{2,5}\.", inside_parens): # numbers and some special chars OR file extensions
+                    print("Unknown parentheses:", token)
 
 
     return acronyms
@@ -284,9 +287,8 @@ def acronyms_from_doc(doc):
     """
 
     doc_acronyms = {}
-    sentences = re.split(r"[\.\?\!]\s+", doc)
 
-    for sentence in sentences:
+    for sentence in split_sentences(doc):
         sentence_acronyms = acronyms_from_sentence(sentence)
         doc_acronyms.update(sentence_acronyms)
 
