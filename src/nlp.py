@@ -99,9 +99,9 @@ def get_stopwords():
     """
 
     with open("stopwords.txt", "r") as f:
-        custom_stopwords = {word for word in f.readline()}
+        custom_stopwords = {word[:-1] for word in f}
 
-    return ENGLISH_STOP_WORDS.union(custom_stopwords)
+    return list(ENGLISH_STOP_WORDS.union(custom_stopwords))
 
 
 
