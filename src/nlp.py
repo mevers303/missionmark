@@ -181,7 +181,7 @@ if __name__ == "__main__":
     debug(f" -> {len(corpus)} documents loaded!", 1)
 
     debug("Vectorizing keywords...")
-    vectorizer = TfidfVectorizer(stop_words=get_stopwords(), tokenizer=tfidf_tokenize, max_df=.75, ngram_range=(1,3))
+    vectorizer = TfidfVectorizer(stop_words=get_stopwords(), tokenizer=tfidf_tokenize, max_df=.75, ngram_range=(1,1))
     corpus_tfidf = vectorizer.fit_transform(corpus)
     debug(f" -> {corpus_tfidf.shape[1]} tokens found!", 1)
 
