@@ -54,7 +54,8 @@ def tfidf_tokenize(text):
     :param text: The text/document to be tokenized.
     :return: A list of stemmed tokens.
     """
-    return [stemmer.stem(token) for token in split_tokens_hard(text)]
+    # return [stemmer.stem(token) for token in split_tokens_hard(text)]
+    return [token for token in split_tokens_hard(text)]
 
 
 
@@ -67,7 +68,8 @@ def get_top_topic_words(H):
     return np.argsort(H, axis=1)[:, ::-1]
 
 
-def print_top_topic_words(H, vectorizer, n_words=100):
+
+def print_top_topic_words(H, word_list, n_words=100):
     """
     Prints the top unique words for predicting a topic.
     :param H: The H matrix from NMF.
@@ -76,8 +78,7 @@ def print_top_topic_words(H, vectorizer, n_words=100):
     :return: None
     """
 
-    word_list = vectorizer.get_feature_names()
-    top_word_indices = get_top_topic_words(H)[:, :-n_words - 1:-1]
+    top_word_indices = get_top_topic_words(H)[:, :n_words]
     top_words = [[word_list[word] for word in topic] for topic in top_word_indices]
 
     topic_number = 0
@@ -146,9 +147,19 @@ def sumarize_corpus(corpus, n_sentences=10):
 
 
 
+def get_corpus_top_topics(W):
+    return np.argmax(W, axis=1)
 
 
-def dump_topic_corpus(W, corpus):
+
+
+def get_corpus_topics(W):
+    return np.argsort(W, axis=1)[::-1]
+
+
+
+
+def dump_topic_corpus(corpus_topics, corpus):
     """
     Saves the corpus to output/<topic #>/<filename>.txt, organized by topic.
     :param W: The W matrix from NMF.
@@ -156,17 +167,34 @@ def dump_topic_corpus(W, corpus):
     :return: None
     """
 
-    doc_topics = np.argmax(W, axis=1)
+    for i in range(corpus_topics.size):
 
-    for i in range(doc_topics.size):
-
-        path = os.path.join("output", str(doc_topics[i]).rjust(2, "0"))
+        path = os.path.join("output", str(corpus_topics[i]).rjust(2, "0"))
         if not os.path.isdir(path):
             os.mkdir(path)
 
         filename = os.path.join(path, f"{i}.txt".rjust(7, "0"))
         with open(filename, "w") as f:
             f.write(corpus[i])
+
+
+def get_tfidf_topic_words(corpus_tfidf, corpus_topics, word_list, n_topics, n_words=100):
+
+    topic_tfidf_words = []
+
+    for topic_i in range(n_topics):
+        topic_corpus = corpus_tfidf[corpus_topics == topic_i]
+        topic_word_scores = topic_corpus.sum(axis=0).A1
+        topic_top_words_i = np.argsort(topic_word_scores)[:-n_words - 1:-1]
+        topic_words = word_list[topic_top_words_i]
+        topic_tfidf_words.append(topic_words)
+        debug(f"TF-IDF words for topic {topic_i}:")
+        debug(str(topic_words))
+
+    return topic_tfidf_words
+
+
+
 
 
 
@@ -183,6 +211,7 @@ if __name__ == "__main__":
     debug("Vectorizing keywords...")
     vectorizer = TfidfVectorizer(stop_words=get_stopwords(), tokenizer=tfidf_tokenize, max_df=.75, ngram_range=(1,1))
     corpus_tfidf = vectorizer.fit_transform(corpus)
+    word_list = np.array(vectorizer.get_feature_names())
     debug(f" -> {corpus_tfidf.shape[1]} tokens found!", 1)
 
     debug(f"Sorting into {n_topics} topics...")
@@ -194,12 +223,15 @@ if __name__ == "__main__":
     debug("Summarizing documents...")
     summaries = sumarize_corpus(corpus)
     debug(f" -> {len(summaries)} documents summarized!", 1)
+
     debug("Saving summaries to disk based on topic...")
-    dump_topic_corpus(W, summaries)
+    corpus_topics = get_corpus_top_topics(W)
+    dump_topic_corpus(corpus_topics, summaries)
     debug(f" -> {len(summaries)} files created!", 1)
 
     if DEBUG_LEVEL > 1:
-        print_top_topic_words(H, vectorizer)
+        print_top_topic_words(H, word_list)
+        get_tfidf_topic_words(corpus_tfidf, corpus_topics, word_list, n_topics)
 
         with open("features.txt", "w") as f:
             for word in vectorizer.get_feature_names():
