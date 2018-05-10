@@ -7,7 +7,7 @@
 from sklearn.decomposition import NMF
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
-from src.data import *
+# from src.data import *
 from src.globals import *
 
 import matplotlib.pyplot as plt
@@ -15,12 +15,25 @@ import pickle
 
 import re
 import os
-from nltk.stem.wordnet import WordNetLemmatizer as Stemmer
+from nltk.stem.snowball import SnowballStemmer as Stemmer
 
 import numpy as np
 
 from wordcloud import WordCloud
 
+
+
+
+
+stemmer = Stemmer("english")
+def tfidf_tokenize(text):
+    """
+    Tokenizes a document to be converted to a TF-IDF vector.
+    :param text: The text/document to be tokenized.
+    :return: A list of stemmed tokens.
+    """
+    return [stemmer.stem(token) for token in split_tokens_hard(text)]
+    # return [token for token in split_tokens_hard(text)]
 
 
 
@@ -40,19 +53,19 @@ def load_pickle_vectorizer():
     with open("corpus_tfidf.pkl", "rb") as f:
         corpus_tfidf = pickle.load(f)
 
-    return corpus, vectorizer, corpus_tfidf
+    return vectorizer, corpus_tfidf
 
 
 def pickle_save(corpus, vectorizer, corpus_tfidf):
 
     with open("corpus.pkl", "wb") as f:
-        corpus = pickle.load(f)
+        pickle.dump(corpus, f)
 
     with open("tfidf.pkl", "wb") as f:
-        vectorizer = pickle.load(f)
+        pickle.dump(vectorizer, f)
 
     with open("corpus_tfidf.pkl", "wb") as f:
-        corpus_tfidf = pickle.load(f)
+        pickle.dump(corpus_tfidf, f)
 
 
 def split_sentences(doc):
@@ -82,18 +95,6 @@ def split_tokens_soft(text):
     :return: A list of tokens.
     """
     return [token for token in re.split(r"[\s/\-\+,\\\"\:\;\[\]]+", text) if token]  # list comprehension removes empty strings
-
-
-
-stemmer = Stemmer()
-def tfidf_tokenize(text):
-    """
-    Tokenizes a document to be converted to a TF-IDF vector.
-    :param text: The text/document to be tokenized.
-    :return: A list of stemmed tokens.
-    """
-    return [stemmer.lemmatize(token) for token in split_tokens_hard(text)]
-    # return [token for token in split_tokens_hard(text)]
 
 
 
@@ -260,15 +261,17 @@ if __name__ == "__main__":
     DEBUG_LEVEL = 2
     n_topics = 25
 
-    # corpus = load_pickle_corpus()
-    # vectorizer, corpus_tfidf = load_pickle_vectorizer()
-    corpus = get_test_data()
+    corpus = load_pickle_corpus()
+    # corpus = get_test_data()
 
-    debug("Vectorizing keywords...")
+    # vectorizer, corpus_tfidf = load_pickle_vectorizer()
+    # debug("Vectorizing keywords...")
     vectorizer = TfidfVectorizer(stop_words=get_stopwords(), tokenizer=tfidf_tokenize, max_df=.85, ngram_range=(1,1))
     corpus_tfidf = vectorizer.fit_transform(corpus)
     word_list = np.array(vectorizer.get_feature_names())
     debug(f" -> {corpus_tfidf.shape[1]} tokens found!", 1)
+
+    pickle_save(corpus, vectorizer, corpus_tfidf)
     exit(0)
 
     debug(f"Sorting into {n_topics} topics...")

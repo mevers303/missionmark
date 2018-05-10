@@ -40,28 +40,26 @@ def get_test_data():
 
 
 
-def get_data():
+def get_all_data():
 
     debug("Loading corpus...")
 
     q = """
-           select name, description, text
+           select id, text
            from import.fbo_files
-           where ts_text_simple @@ to_tsquery('agile <-> software <-> development')
-           limit 100
         """
 
     cursor.execute(q)
 
-    names = []
-    descriptions = []
-    docs = []
+    ids, docs = zip(*cursor)
 
-    for row in cursor:
-        names.append(row[0])
-        descriptions.append(row[1])
-        docs.append(row[2])
+    # ids = []
+    # docs = []
+    #
+    # for row in cursor:
+    #     ids.append(row[0])
+    #     docs.append(row[1])
 
     debug(" -> Corpus loaded")
 
-    return names, descriptions, docs
+    return ids, docs
