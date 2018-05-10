@@ -80,6 +80,7 @@ def sumarize_corpus(corpus):
 
     for doc in corpus:
         summaries.append(summarize_doc(doc, vectorizer))
+        completed += 1
         progress_bar(completed, n_docs)
 
     return summaries
