@@ -5,6 +5,7 @@
 
 
 import psycopg2
+from src.globals import *
 
 
 
@@ -14,10 +15,10 @@ with open("/home/mark/missionmark_db_creds", "r") as f:
     user = f.readline()[:-1]
     password = f.readline()[:-1]
 
-print("Connecting to Postgres database...")
+debug("Connecting to Postgres database...")
 conn = psycopg2.connect(host=host, dbname=dbname, user=user, password=password)
 cursor = conn.cursor()
-print(" -> Connection successful!")
+debug(" -> Connection successful!", 1)
 
 
 

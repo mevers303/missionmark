@@ -6,7 +6,7 @@
 from sys import stdout
 
 
-DEBUG_LEVEL = 0
+DEBUG_LEVEL = 1
 
 
 _PROGRESS_BAR_LAST_I = 100

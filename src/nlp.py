@@ -173,36 +173,39 @@ def dump_topic_corpus(W, corpus):
 # def main():
 if __name__ == "__main__":
 
+    DEBUG_LEVEL = 2
     n_topics = 25
 
-    print("Loading corpus...")
+    debug("Loading corpus...")
     corpus = get_test_data()
-    print(f" -> {len(corpus)} documents loaded!")
+    debug(f" -> {len(corpus)} documents loaded!", 1)
 
-    print("Vectorizing keywords...")
-    vectorizer = TfidfVectorizer(stop_words=get_stopwords(), tokenizer=tfidf_tokenize, max_df=.75)
+    debug("Vectorizing keywords...")
+    vectorizer = TfidfVectorizer(stop_words=get_stopwords(), tokenizer=tfidf_tokenize, max_df=.75, ngram_range=(1,3))
     corpus_tfidf = vectorizer.fit_transform(corpus)
-    print(f" -> {corpus_tfidf.shape[1]} tokens found!")
+    debug(f" -> {corpus_tfidf.shape[1]} tokens found!", 1)
 
-    print(f"Sorting into {n_topics} topics...")
+    debug(f"Sorting into {n_topics} topics...")
     model = NMF(n_components=25, max_iter=500)
     W = model.fit_transform(corpus_tfidf)
     H = model.components_
-    print(f" -> {model.n_iter_} iterations completed!")
+    debug(f" -> {model.n_iter_} iterations completed!", 1)
 
-    print("Summarizing documents...")
+    debug("Summarizing documents...")
     summaries = sumarize_corpus(corpus)
-    print(f" -> {len(summaries)} documents summarized!")
-    print("Saving summaries to disk based on topic...")
+    debug(f" -> {len(summaries)} documents summarized!", 1)
+    debug("Saving summaries to disk based on topic...")
     dump_topic_corpus(W, summaries)
-    print(f" -> {len(summaries)} files created!")
+    debug(f" -> {len(summaries)} files created!", 1)
 
-    print_top_topic_words(H, vectorizer)
-    with open("features.txt", "w") as f:
-        for word in vectorizer.get_feature_names():
-            f.write(word + "\n")
+    if DEBUG_LEVEL > 1:
+        print_top_topic_words(H, vectorizer)
 
-    print("Done!")
+        with open("features.txt", "w") as f:
+            for word in vectorizer.get_feature_names():
+                f.write(word + "\n")
+
+    debug("Done!")
 
 
 
