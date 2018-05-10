@@ -105,7 +105,7 @@ def get_stopwords():
 
 
 
-def summarize_doc(doc, vectorizer, n_sentences = 10):
+def summarize_doc(doc, vectorizer, n_sentences=10):
     """
     Auto summarizes a document.
     :param doc: The document to be summarized.
@@ -118,7 +118,7 @@ def summarize_doc(doc, vectorizer, n_sentences = 10):
     sentence_tfidf = vectorizer.transform(sentences)
     # sentences_wordcounts = np.count_nonzero(sentence_tfidf, axis=1)
 
-    sentence_scores = sentence_tfidf.sum(axis=1).flatten()  # / sentences_wordcounts
+    sentence_scores = sentence_tfidf.sum(axis=1).A1  # / sentences_wordcounts
     best_sentences = [f"{'*' * 120}\n{'*' * 120}\n{'*' * 120}\n{sentences[i]}." for i in np.sort(np.argsort(sentence_scores)[:-n_sentences - 1:-1])]
 
     return "\n\n\n".join(best_sentences)
