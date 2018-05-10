@@ -299,6 +299,10 @@ def acronyms_from_doc(doc):
 
 
 def main():
+    """
+    You know what it do...
+    :return: None
+    """
 
     with open("scratch.txt", "r") as f:
         doc = f.read()
