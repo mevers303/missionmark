@@ -23,9 +23,9 @@ def tfidf_tokenize(text):
 
 
 
-def print_top_words(H, words, num_words=100):
+def get_top_words(H, words, num_words=100):
 
-    word_indices = np.array(np.argsort(H, axis=1)[:, :-num_words - 1:-1])
+    word_indices = np.argsort(H, axis=1)[:, :-num_words - 1:-1]
     top_words = []
 
     for topic_i in range(word_indices.shape[0]):
@@ -98,7 +98,8 @@ def dump_topic_summaries(W, summaries):
 
 
 
-def main():
+# def main():
+if __name__ == "__main__":
 
     vectorizer = TfidfVectorizer(stop_words=get_stopwords(), tokenizer=tfidf_tokenize, max_df=.75)
     corpus = get_test_data()
@@ -119,5 +120,5 @@ def main():
 
 
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()

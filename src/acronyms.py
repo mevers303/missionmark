@@ -6,7 +6,7 @@
 
 import re
 import string
-from src.data import split_sentences, split_tokens_hard
+from src.data import split_sentences, split_tokens_soft
 
 # These constants are for when it has to search for the acronym
 UNMATCHED_ACRONYM_FIRSTLETTER_SEARCH_LEN = 5  # how many words before the believed first word to search
@@ -244,7 +244,7 @@ def acronyms_from_sentence(sentence):
     """
 
     acronyms = {}
-    tokens = split_tokens_hard(sentence)
+    tokens = split_tokens_soft(sentence)
 
 
     for i, token in enumerate(tokens):
