@@ -11,14 +11,48 @@ from src.data import *
 from src.globals import *
 
 import matplotlib.pyplot as plt
+import pickle
 
 import re
 import os
-from nltk.stem.porter import PorterStemmer
+from nltk.stem.wordnet import WordNetLemmatizer as Stemmer
 
 import numpy as np
 
 from wordcloud import WordCloud
+
+
+
+
+def load_pickle_corpus():
+
+    with open("corpus.pkl", "rb") as f:
+        corpus = pickle.load(f)
+
+    return corpus
+
+
+def load_pickle_vectorizer():
+
+    with open("tfidf.pkl", "rb") as f:
+        vectorizer = pickle.load(f)
+
+    with open("corpus_tfidf.pkl", "rb") as f:
+        corpus_tfidf = pickle.load(f)
+
+    return corpus, vectorizer, corpus_tfidf
+
+
+def pickle_save(corpus, vectorizer, corpus_tfidf):
+
+    with open("corpus.pkl", "wb") as f:
+        corpus = pickle.load(f)
+
+    with open("tfidf.pkl", "wb") as f:
+        vectorizer = pickle.load(f)
+
+    with open("corpus_tfidf.pkl", "wb") as f:
+        corpus_tfidf = pickle.load(f)
 
 
 def split_sentences(doc):
@@ -51,15 +85,15 @@ def split_tokens_soft(text):
 
 
 
-stemmer = PorterStemmer()
+stemmer = Stemmer()
 def tfidf_tokenize(text):
     """
     Tokenizes a document to be converted to a TF-IDF vector.
     :param text: The text/document to be tokenized.
     :return: A list of stemmed tokens.
     """
-    # return [stemmer.stem(token) for token in split_tokens_hard(text)]
-    return [token for token in split_tokens_hard(text)]
+    return [stemmer.lemmatize(token) for token in split_tokens_hard(text)]
+    # return [token for token in split_tokens_hard(text)]
 
 
 
@@ -152,12 +186,22 @@ def sumarize_corpus(corpus, n_sentences=20):
 
 
 def get_corpus_top_topics(W):
+    """
+    Gets the best single topic for each document.
+    :param W: W from NMF
+    :return: An array of topic indexes.
+    """
     return np.argmax(W, axis=1)
 
 
 
 
-def get_corpus_topics(W):
+def get_corpus_topic_strengths(W):
+    """
+    Gets a matrix of topic strengths
+    :param W:
+    :return:
+    """
     return np.argsort(W, axis=1)[::-1]
 
 
@@ -196,7 +240,7 @@ def get_tfidf_topic_words(corpus_tfidf, corpus_topics, word_list, n_topics, n_wo
         debug(str(topic_words))
 
         wc = WordCloud(background_color="black", max_words=2000, width=2000, height=1000)
-        wc.fit_words({word_list[word_i]: topic_word_scores[word_i] for word_i in topic_top_words_i})
+        wc.fit_words({word_list[word_i]: topic_word_scores[word_i] for word_i in topic_top_words_i if topic_word_scores[word_i]})
         wc.to_file(os.path.join("output/" + str(topic_i).rjust(2, "0"), "wordcloud.png"))
 
         # plt.imshow(wc)
@@ -216,6 +260,8 @@ if __name__ == "__main__":
     DEBUG_LEVEL = 2
     n_topics = 25
 
+    # corpus = load_pickle_corpus()
+    # vectorizer, corpus_tfidf = load_pickle_vectorizer()
     corpus = get_test_data()
 
     debug("Vectorizing keywords...")
@@ -223,6 +269,7 @@ if __name__ == "__main__":
     corpus_tfidf = vectorizer.fit_transform(corpus)
     word_list = np.array(vectorizer.get_feature_names())
     debug(f" -> {corpus_tfidf.shape[1]} tokens found!", 1)
+    exit(0)
 
     debug(f"Sorting into {n_topics} topics...")
     model = NMF(n_components=n_topics, max_iter=500)
