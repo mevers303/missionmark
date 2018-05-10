@@ -35,6 +35,9 @@ def progress_bar(done, total, resolution = 0, text=""):
         stdout.flush()
 
     if i == 100:
-        print("\n")
+        # print("\n")
+        stdout.write('\r')
+        stdout.write(' ' * 80)
+        stdout.write('\r')
 
     _PROGRESS_BAR_LAST_I = i

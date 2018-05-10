@@ -32,7 +32,9 @@ def split_tokens_hard(text):
     :param text: The text to be tokenized
     :return: A list of tokens
     """
-    return [token for token in re.split(r"[^a-zA-Z0-9]+|[\-\.]{3,}|\s[\-\.]+|[\-\.]+\s", text) if token]  # list comprehension removes empty strings
+    # return [token for token in re.split(r"[^a-zA-Z0-9\-\.]+|[\-\.]{3,}|\s[\-\.]+|[\-\.]+\s", text) if token]  # list comprehension removes empty strings
+    # return [token for token in re.split(r"[^a-zA-Z0-9]+", text) if token]  # list comprehension removes empty strings
+    return [token for token in re.split(r"[^a-zA-Z]+", text) if token]  # list comprehension removes empty strings
 
 
 def split_tokens_soft(text):
@@ -196,8 +198,9 @@ if __name__ == "__main__":
     print(f" -> {len(summaries)} files created!\n")
 
     print_top_topic_words(H, vectorizer)
-    with open("features_super_hard_split.txt", "w") as f:
-        f.writelines(vectorizer.get_feature_names())
+    with open("features.txt", "w") as f:
+        for word in vectorizer.get_feature_names():
+            f.write(word + "\n")
 
     print("Done!")
 
