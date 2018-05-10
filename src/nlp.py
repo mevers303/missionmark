@@ -8,6 +8,7 @@ from sklearn.decomposition import NMF
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 from src.data import *
+from src.globals import *
 
 import re
 import os
@@ -23,23 +24,14 @@ def tfidf_tokenize(text):
 
 
 
-def get_top_words(H, words, num_words=100):
+def get_top_topic_words(H, words, num_words=100):
 
     word_indices = np.argsort(H, axis=1)[:, :-num_words - 1:-1]
-    top_words = []
+    top_words = [[words[word] for word in topic] for topic in word_indices]
 
-    for topic_i in range(word_indices.shape[0]):
-        top_words.append([words[word] for word in word_indices[topic_i]])
-
-    for topic_i in range(len(top_words)):
-
-        other_words = set()
-        for i in range(len(top_words)):
-            if i == topic_i:
-                continue
-            other_words.update(top_words[i])
-
-        unique_words = set(top_words[topic_i]) - other_words
+    for topic in top_words:
+        other_words = {word for other_topic in top_words if other_topic != topic for word in other_topic}
+        unique_words = set(topic) - other_words
 
         print(f"Top words for latent feature {topic_i}:\n", unique_words)
         print() # newline
@@ -80,10 +72,24 @@ def summarize_doc(doc, vectorizer):
     return "\n\n\n".join(best_sentences)
 
 
+def sumarize_corpus(corpus):
+
+    summaries = []
+    n_docs = len(corpus)
+    completed = 0
+
+    for doc in corpus:
+        summaries.append(summarize_doc(doc, vectorizer))
+        progress_bar(completed, n_docs)
+
+    return summaries
+
+
+
+
 
 def dump_topic_summaries(W, summaries):
 
-    print("Dumping summaries to file based on topic...")
     doc_topics = np.argmax(W, axis=1)
 
     for i in range(doc_topics.size):
@@ -101,20 +107,29 @@ def dump_topic_summaries(W, summaries):
 # def main():
 if __name__ == "__main__":
 
-    vectorizer = TfidfVectorizer(stop_words=get_stopwords(), tokenizer=tfidf_tokenize, max_df=.75)
+    n_topics = 25
+
+    print("Loading corpus...")
     corpus = get_test_data()
+    print(f" -> {len(corpus)} documents loaded!\n")
 
     print("Vectorizing keywords...")
+    vectorizer = TfidfVectorizer(stop_words=get_stopwords(), tokenizer=tfidf_tokenize, max_df=.75)
     corpus_tfidf = vectorizer.fit_transform(corpus)
+    print(f" -> {corpus_tfidf.shape[1]} tokens found!\n")
 
-    print("Searching for latent topics...")
-    model = NMF(n_components=25, max_iter=100)
+    print(f"Sorting into {n_topics} topics...")
+    model = NMF(n_components=25, max_iter=500)
     W = model.fit_transform(corpus_tfidf)
     H = model.components_
+    print(f" -> {model.n_iter_} iterations completed!\n")
 
     print("Summarizing documents...")
-    summaries = [summarize_doc(doc, vectorizer) for doc in corpus]
+    summaries = sumarize_corpus(corpus)
+    print(f" -> {len(summaries)} documents summarized!\n")
+    print("Saving summaries to disk based on topic...")
     dump_topic_summaries(W, summaries)
+    print(f" -> {len(summaries)} files created!\n")
 
     print("Done!")
 
