@@ -17,9 +17,10 @@ import numpy as np
 
 
 stemmer = PorterStemmer()
-def tokenize(text):
+def tfidf_tokenize(text):
     """Tokenizes a document."""
     return [stemmer.stem(token) for token in split_tokens_hard(text)]
+
 
 
 def print_top_words(H, words, num_words=100):
@@ -67,40 +68,54 @@ def get_stopwords():
 
 
 
-
-
-
-vectorizer = TfidfVectorizer(stop_words=get_stopwords(), tokenizer=tokenize, max_df=.75)
-corpus = get_test_data()
-corpus_tfidf = vectorizer.fit_transform(corpus)
-
-model = NMF(n_components=25, max_iter=100)
-
-W = model.fit_transform(corpus_tfidf)
-H = model.components_
-
-
-
-summaries = []
-for doc in corpus:
+def summarize_doc(doc, vectorizer):
 
     sentences = split_sentences(doc)
     sentence_tfidf = vectorizer.transform(sentences).toarray()
     # sentences_wordcounts = np.count_nonzero(sentence_tfidf, axis=1)
     sentence_scores = np.sum(sentence_tfidf, axis=1).flatten()  # / sentences_wordcounts
-    best_sentences = [f"{'*' * 120}\n{sentences[i]}." for i in np.sort(np.argsort(sentence_scores)[:-11:-1])]
-    summaries.append("\n\n\n".join(best_sentences))
+    best_sentences = [f"{'*' * 120}\n{'*' * 120}\n{'*' * 120}\n{sentences[i]}." for i in np.sort(np.argsort(sentence_scores)[:-11:-1])]
+
+    return "\n\n\n".join(best_sentences)
 
 
 
+def dump_topic_summaries(W, summaries):
 
-topics = np.argmax(W, axis=1)
-for i in range(topics.size):
+    print("Dumping summaries to file based on topic...")
+    doc_topics = np.argmax(W, axis=1)
 
-    path = os.path.join("output", str(topics[i]).rjust(2, "0"))
-    if not os.path.isdir(path):
-        os.mkdir(path)
+    for i in range(doc_topics.size):
 
-    filename = os.path.join(path, f"{i}.txt".rjust(7, "0"))
-    with open(filename, "w") as f:
-        f.write(summaries[i])
+        path = os.path.join("output", str(doc_topics[i]).rjust(2, "0"))
+        if not os.path.isdir(path):
+            os.mkdir(path)
+
+        filename = os.path.join(path, f"{i}.txt".rjust(7, "0"))
+        with open(filename, "w") as f:
+            f.write(summaries[i])
+
+
+
+def main():
+
+    vectorizer = TfidfVectorizer(stop_words=get_stopwords(), tokenizer=tfidf_tokenize, max_df=.75)
+    corpus = get_test_data()
+
+    print("Vectorizing keywords...")
+    corpus_tfidf = vectorizer.fit_transform(corpus)
+
+    print("Searching for latent topics...")
+    model = NMF(n_components=25, max_iter=100)
+    W = model.fit_transform(corpus_tfidf)
+    H = model.components_
+
+    print("Summarizing documents...")
+    summaries = [summarize_doc(doc, vectorizer) for doc in corpus]
+    dump_topic_summaries(W, summaries)
+
+    print("Done!")
+
+
+if __name__ == "__main__":
+    main()
