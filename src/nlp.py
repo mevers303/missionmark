@@ -15,7 +15,7 @@ import pickle
 
 import re
 import os
-from nltk.stem.snowball import SnowballStemmer as Stemmer
+from nltk.stem.wordnet import WordNetLemmatizer as Stemmer
 
 import numpy as np
 
@@ -25,16 +25,26 @@ from wordcloud import WordCloud
 
 
 
-stemmer = Stemmer("english")
+stemmer = Stemmer()
 def tfidf_tokenize(text):
     """
     Tokenizes a document to be converted to a TF-IDF vector.
     :param text: The text/document to be tokenized.
     :return: A list of stemmed tokens.
     """
-    return [stemmer.stem(token) for token in split_tokens_hard(text)]
+    return [stem(token) for token in split_tokens_hard(text)]
     # return [token for token in split_tokens_hard(text)]
 
+
+def stem(token):
+
+    if token.endswith("ies") and len(token) > 6:
+        return token.replace("ies", "y")
+
+    if token.endswith("s") and len(token) > 5 and not token.endswith("ss"):
+        return token[:-1]
+
+    return token
 
 
 def load_pickle_corpus():
@@ -265,12 +275,16 @@ if __name__ == "__main__":
     # corpus = get_test_data()
 
     # vectorizer, corpus_tfidf = load_pickle_vectorizer()
-    # debug("Vectorizing keywords...")
-    vectorizer = TfidfVectorizer(stop_words=get_stopwords(), tokenizer=tfidf_tokenize, max_df=.85, ngram_range=(1,1))
+    debug("Vectorizing keywords...")
+    vectorizer = TfidfVectorizer(stop_words=get_stopwords(), tokenizer=tfidf_tokenize, max_df=.9, min_df=2, ngram_range=(1,1))
     corpus_tfidf = vectorizer.fit_transform(corpus)
     word_list = np.array(vectorizer.get_feature_names())
     debug(f" -> {corpus_tfidf.shape[1]} tokens found!", 1)
 
+    if DEBUG_LEVEL > 1:
+        with open("features.txt", "w") as f:
+            for word in word_list:
+                f.write(word + "\n")
     pickle_save(corpus, vectorizer, corpus_tfidf)
     exit(0)
 

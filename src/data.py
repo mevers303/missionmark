@@ -51,7 +51,7 @@ def get_all_data():
 
     cursor.execute(q)
 
-    ids, docs = zip(*cursor)
+    ids, corpus = zip(*cursor)
 
     # ids = []
     # docs = []
@@ -60,9 +60,9 @@ def get_all_data():
     #     ids.append(row[0])
     #     docs.append(row[1])
 
-    debug(" -> Corpus loaded")
+    debug(f" -> {len(corpus)} documents loaded!", 1)
 
-    return ids, docs
+    return ids, corpus
 
 
 if __name__ == "__main__":
