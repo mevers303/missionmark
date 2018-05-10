@@ -17,23 +17,9 @@ import numpy as np
 
 
 stemmer = PorterStemmer()
-def stem_tokens(tokens):
-    """Port-stems a list of tokens."""
-
-    stemmed = []
-    for item in tokens:
-        stemmed.append(stemmer.stem(item))
-
-    return stemmed
-
-
 def tokenize(text):
     """Tokenizes a document."""
-
-    tokens = re.split(r"[^a-zA-Z0-9\-\.]+", text)
-    stems = stem_tokens(tokens)
-
-    return stems
+    return [stemmer.stem(token) for token in split_tokens_hard(text)]
 
 
 def print_top_words(H, words, num_words=100):
@@ -72,8 +58,19 @@ def print_top_docs(W, titles):
 
 
 
-stop_words = ENGLISH_STOP_WORDS.copy().union({"-", "pdf", "docx", ""})
-vectorizer = TfidfVectorizer(stop_words=stop_words, tokenizer=tokenize, max_df=.75)
+def get_stopwords():
+
+    with open("stopwords.txt", "r") as f:
+        custom_stopwords = {word for word in f.readline()}
+
+    return ENGLISH_STOP_WORDS.union(custom_stopwords)
+
+
+
+
+
+
+vectorizer = TfidfVectorizer(stop_words=get_stopwords(), tokenizer=tokenize, max_df=.75)
 corpus = get_test_data()
 corpus_tfidf = vectorizer.fit_transform(corpus)
 
