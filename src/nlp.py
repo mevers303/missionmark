@@ -29,11 +29,13 @@ def get_top_topic_words(H, words, num_words=100):
     word_indices = np.argsort(H, axis=1)[:, :-num_words - 1:-1]
     top_words = [[words[word] for word in topic] for topic in word_indices]
 
+    topic_number = 0
     for topic in top_words:
         other_words = {word for other_topic in top_words if other_topic != topic for word in other_topic}
         unique_words = set(topic) - other_words
 
-        print(f"Top words for latent feature {topic_i}:\n", unique_words)
+        topic_number += 1
+        print(f"Top words for latent feature {topic_number}:\n", unique_words)
         print() # newline
 
 
