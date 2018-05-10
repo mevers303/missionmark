@@ -229,12 +229,12 @@ def parse_acronym(acronym, acronym_i, tokens):
         search_result = capital_words_search(acronym_i, tokens)
 
     if not search_result:
-        debug(f"WARNING -> Acronym does not match: {acronym}", 1)
-        debug(f" !!!!!! -> Could not find a good match, keeping original: {definition_tokens}", 2)
+        debug(f"WARNING -> Acronym does not match: {acronym}", 2)
+        debug(f" !!!!!! -> Could not find a good match, keeping original: {definition_tokens}", 3)
         return " ".join(definition_tokens)
     else:
-        debug(f"WARNING -> Acronym does not match: {acronym}", 2)
-        debug(f"     OK -> Best match: {search_result}", 2)
+        debug(f"WARNING -> Acronym does not match: {acronym}", 3)
+        debug(f"     OK -> Best match: {search_result}", 3)
         return " ".join(search_result)
 
 
@@ -278,7 +278,7 @@ def acronyms_from_sentence(sentence):
                     # inside_parens = match_obj.group(1)
                     # if not re.match(r"[0-9\.%#\-]+|\.[a-zA-Z]{3,4}|[a-z]{2,5}\.", inside_parens): # numbers and some special chars OR file extensions
                     #     print("Unknown parentheses:", token)
-                    debug(f"Unknown parenteses: {token}", 3)
+                    debug(f"Unknown parenteses: {token}", 4)
 
 
     return acronyms

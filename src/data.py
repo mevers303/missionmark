@@ -24,6 +24,8 @@ debug(" -> Connection successful!", 1)
 
 def get_test_data():
 
+    debug("Loading test corpus...")
+
     q = """
            select text
            from import.fbo_files
@@ -31,13 +33,16 @@ def get_test_data():
         """
 
     cursor.execute(q)
-    return [row[0] for row in cursor]
+    corpus = [row[0] for row in cursor]
+
+    debug(f" -> {len(corpus)} documents loaded!", 1)
+    return corpus
 
 
 
 def get_data():
 
-    print("Loading data...")
+    debug("Loading corpus...")
 
     q = """
            select name, description, text
@@ -56,5 +61,7 @@ def get_data():
         names.append(row[0])
         descriptions.append(row[1])
         docs.append(row[2])
+
+    debug(" -> Corpus loaded")
 
     return names, descriptions, docs

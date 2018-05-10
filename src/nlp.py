@@ -202,11 +202,9 @@ def get_tfidf_topic_words(corpus_tfidf, corpus_topics, word_list, n_topics, n_wo
 if __name__ == "__main__":
 
     DEBUG_LEVEL = 2
-    n_topics = 25
+    n_topics = 10
 
-    debug("Loading corpus...")
     corpus = get_test_data()
-    debug(f" -> {len(corpus)} documents loaded!", 1)
 
     debug("Vectorizing keywords...")
     vectorizer = TfidfVectorizer(stop_words=get_stopwords(), tokenizer=tfidf_tokenize, max_df=.75, ngram_range=(1,1))
@@ -215,7 +213,7 @@ if __name__ == "__main__":
     debug(f" -> {corpus_tfidf.shape[1]} tokens found!", 1)
 
     debug(f"Sorting into {n_topics} topics...")
-    model = NMF(n_components=25, max_iter=500)
+    model = NMF(n_components=n_topics, max_iter=500)
     W = model.fit_transform(corpus_tfidf)
     H = model.components_
     debug(f" -> {model.n_iter_} iterations completed!", 1)
