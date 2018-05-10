@@ -177,25 +177,25 @@ if __name__ == "__main__":
 
     print("Loading corpus...")
     corpus = get_test_data()
-    print(f" -> {len(corpus)} documents loaded!\n")
+    print(f" -> {len(corpus)} documents loaded!")
 
     print("Vectorizing keywords...")
     vectorizer = TfidfVectorizer(stop_words=get_stopwords(), tokenizer=tfidf_tokenize, max_df=.75)
     corpus_tfidf = vectorizer.fit_transform(corpus)
-    print(f" -> {corpus_tfidf.shape[1]} tokens found!\n")
+    print(f" -> {corpus_tfidf.shape[1]} tokens found!")
 
     print(f"Sorting into {n_topics} topics...")
     model = NMF(n_components=25, max_iter=500)
     W = model.fit_transform(corpus_tfidf)
     H = model.components_
-    print(f" -> {model.n_iter_} iterations completed!\n")
+    print(f" -> {model.n_iter_} iterations completed!")
 
     print("Summarizing documents...")
     summaries = sumarize_corpus(corpus)
-    print(f" -> {len(summaries)} documents summarized!\n")
+    print(f" -> {len(summaries)} documents summarized!")
     print("Saving summaries to disk based on topic...")
     dump_topic_corpus(W, summaries)
-    print(f" -> {len(summaries)} files created!\n")
+    print(f" -> {len(summaries)} files created!")
 
     print_top_topic_words(H, vectorizer)
     with open("features.txt", "w") as f:

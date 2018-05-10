@@ -17,6 +17,7 @@ with open("/home/mark/missionmark_db_creds", "r") as f:
 print("Connecting to Postgres database...")
 conn = psycopg2.connect(host=host, dbname=dbname, user=user, password=password)
 cursor = conn.cursor()
+print(" -> Connection successful!")
 
 
 

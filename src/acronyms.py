@@ -7,11 +7,13 @@
 import re
 import string
 from src.nlp import split_sentences, split_tokens_soft
+from src.globals import *
 
 # These constants are for when it has to search for the acronym
 UNMATCHED_ACRONYM_FIRSTLETTER_SEARCH_LEN = 5  # how many words before the believed first word to search
 UNMATCHED_ACRONYM_CAPITALS_SEARCH_LEN = 7  # how many capitalized letters to include when above doesn't work
 MAX_ACRONYM_LEN = 7  # any longer than this will be ignored
+DEBUG_LEVEL = 0
 
 
 
@@ -65,9 +67,9 @@ def print_acronyms(acronyms):
     :return: None
     """
 
-    print("\nACRONYM DICTIONARY")
+    debug("\nACRONYM DICTIONARY")
     for k, v in acronyms.items():
-        print("{0}:".format(k).ljust(10), v)
+        debug(f"{k}:".ljust(10) + v)
 
 
 
@@ -227,11 +229,12 @@ def parse_acronym(acronym, acronym_i, tokens):
         search_result = capital_words_search(acronym_i, tokens)
 
     if not search_result:
-        print("WARNING -> Acronym does not match:", acronym, definition_tokens)
-        # print("  !!!!! -> Could not find a good match, keeping original:", definition_tokens)
+        debug(f"WARNING -> Acronym does not match: {acronym}", 1)
+        debug(f" !!!!!! -> Could not find a good match, keeping original: {definition_tokens}", 2)
         return " ".join(definition_tokens)
     else:
-        # print("    +ok -> Best match:", search_result)
+        debug(f"WARNING -> Acronym does not match: {acronym}", 2)
+        debug(f"     OK -> Best match: {search_result}", 2)
         return " ".join(search_result)
 
 
@@ -268,11 +271,14 @@ def acronyms_from_sentence(sentence):
                 add_to_acronyms(acronyms, acronym, definition)
 
         else:
-            match_obj = re.match(r"\((.+)\)", token)
-            if match_obj:
-                inside_parens = match_obj.group(1)
-                if not re.match(r"[0-9\.%#\-]+|\.[a-zA-Z]{3,4}|[a-z]{2,5}\.", inside_parens): # numbers and some special chars OR file extensions
-                    print("Unknown parentheses:", token)
+
+            if DEBUG_LEVEL > 2:
+                match_obj = re.match(r"\((.+)\)", token)
+                if match_obj:
+                    # inside_parens = match_obj.group(1)
+                    # if not re.match(r"[0-9\.%#\-]+|\.[a-zA-Z]{3,4}|[a-z]{2,5}\.", inside_parens): # numbers and some special chars OR file extensions
+                    #     print("Unknown parentheses:", token)
+                    debug(f"Unknown parenteses: {token}", 3)
 
 
     return acronyms

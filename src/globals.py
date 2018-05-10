@@ -5,6 +5,10 @@
 
 from sys import stdout
 
+
+DEBUG_LEVEL = 0
+
+
 _PROGRESS_BAR_LAST_I = 100
 def progress_bar(done, total, resolution = 0, text=""):
     """
@@ -41,3 +45,9 @@ def progress_bar(done, total, resolution = 0, text=""):
         stdout.write('\r')
 
     _PROGRESS_BAR_LAST_I = i
+
+
+def debug(text, level = 0):
+
+    if level <= DEBUG_LEVEL:
+        print(text)
