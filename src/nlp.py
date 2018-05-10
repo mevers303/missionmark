@@ -1,6 +1,6 @@
 # Mark Evers
 # 5/7/18
-# topics.py
+# nlp.py
 # Script for model extraction
 
 
@@ -73,6 +73,7 @@ def summarize_doc(doc, vectorizer):
     sentences = split_sentences(doc)
     sentence_tfidf = vectorizer.transform(sentences).toarray()
     # sentences_wordcounts = np.count_nonzero(sentence_tfidf, axis=1)
+
     sentence_scores = np.sum(sentence_tfidf, axis=1).flatten()  # / sentences_wordcounts
     best_sentences = [f"{'*' * 120}\n{'*' * 120}\n{'*' * 120}\n{sentences[i]}." for i in np.sort(np.argsort(sentence_scores)[:-11:-1])]
 
@@ -115,6 +116,7 @@ def main():
     dump_topic_summaries(W, summaries)
 
     print("Done!")
+
 
 
 if __name__ == "__main__":
