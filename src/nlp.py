@@ -10,11 +10,15 @@ from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 from src.data import *
 from src.globals import *
 
+import matplotlib.pyplot as plt
+
 import re
 import os
 from nltk.stem.porter import PorterStemmer
 
 import numpy as np
+
+from wordcloud import WordCloud
 
 
 def split_sentences(doc):
@@ -106,7 +110,7 @@ def get_stopwords():
 
 
 
-def summarize_doc(doc, vectorizer, n_sentences=10):
+def summarize_doc(doc, vectorizer, n_sentences=20):
     """
     Auto summarizes a document.
     :param doc: The document to be summarized.
@@ -126,7 +130,7 @@ def summarize_doc(doc, vectorizer, n_sentences=10):
 
 
 
-def sumarize_corpus(corpus, n_sentences=10):
+def sumarize_corpus(corpus, n_sentences=20):
     """
     Summarizes an entire corpus.  Displays a progress bar.
     :param corpus: The corpus to be summarized
@@ -178,18 +182,26 @@ def dump_topic_corpus(corpus_topics, corpus):
             f.write(corpus[i])
 
 
-def get_tfidf_topic_words(corpus_tfidf, corpus_topics, word_list, n_topics, n_words=100):
+def get_tfidf_topic_words(corpus_tfidf, corpus_topics, word_list, n_topics, n_words=10):
 
     topic_tfidf_words = []
 
     for topic_i in range(n_topics):
         topic_corpus = corpus_tfidf[corpus_topics == topic_i]
         topic_word_scores = topic_corpus.sum(axis=0).A1
-        topic_top_words_i = np.argsort(topic_word_scores)[:-n_words - 1:-1]
-        topic_words = word_list[topic_top_words_i]
+        topic_top_words_i = np.argsort(topic_word_scores)[::-1]
+        topic_words = word_list[topic_top_words_i[:n_words]]
         topic_tfidf_words.append(topic_words)
         debug(f"TF-IDF words for topic {topic_i}:")
         debug(str(topic_words))
+
+        wc = WordCloud(background_color="black", max_words=2000, width=2000, height=1000)
+        wc.fit_words({word_list[word_i]: topic_word_scores[word_i] for word_i in topic_top_words_i})
+        wc.to_file(os.path.join("output/" + str(topic_i).rjust(2, "0"), "wordcloud.png"))
+
+        # plt.imshow(wc)
+        # plt.axis("off")
+        # plt.show()
 
     return topic_tfidf_words
 
@@ -202,12 +214,12 @@ def get_tfidf_topic_words(corpus_tfidf, corpus_topics, word_list, n_topics, n_wo
 if __name__ == "__main__":
 
     DEBUG_LEVEL = 2
-    n_topics = 10
+    n_topics = 25
 
     corpus = get_test_data()
 
     debug("Vectorizing keywords...")
-    vectorizer = TfidfVectorizer(stop_words=get_stopwords(), tokenizer=tfidf_tokenize, max_df=.75, ngram_range=(1,1))
+    vectorizer = TfidfVectorizer(stop_words=get_stopwords(), tokenizer=tfidf_tokenize, max_df=.85, ngram_range=(1,1))
     corpus_tfidf = vectorizer.fit_transform(corpus)
     word_list = np.array(vectorizer.get_feature_names())
     debug(f" -> {corpus_tfidf.shape[1]} tokens found!", 1)
