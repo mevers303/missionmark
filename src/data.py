@@ -8,12 +8,13 @@ import psycopg2
 
 
 
-with open("~/missionmark_db_creds", "r") as f:
-    host = f.readline()
-    dbname = f.readline()
-    user = f.readline()
-    password = f.readline()
+with open("/home/mark/missionmark_db_creds", "r") as f:
+    host = f.readline()[:-1]
+    dbname = f.readline()[:-1]
+    user = f.readline()[:-1]
+    password = f.readline()[:-1]
 
+print("Connecting to Postgres database...")
 conn = psycopg2.connect(host=host, dbname=dbname, user=user, password=password)
 cursor = conn.cursor()
 

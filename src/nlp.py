@@ -32,7 +32,7 @@ def split_tokens_hard(text):
     :param text: The text to be tokenized
     :return: A list of tokens
     """
-    return [token for token in re.split(r"[^a-zA-Z0-9\-\.]+|[\-\.]{3,}|\s[\-\.]+|[\-\.]+\s", text) if token]  # list comprehension removes empty strings
+    return [token for token in re.split(r"[^a-zA-Z0-9]+|[\-\.]{3,}|\s[\-\.]+|[\-\.]+\s", text) if token]  # list comprehension removes empty strings
 
 
 def split_tokens_soft(text):
@@ -65,7 +65,7 @@ def get_top_topic_words(H):
     return np.argsort(H, axis=1)[:, ::-1]
 
 
-def print_top_topic_words(H, vectorizer, num_words=100):
+def print_top_topic_words(H, vectorizer, n_words=100):
     """
     Prints the top unique words for predicting a topic.
     :param H: The H matrix from NMF.
@@ -75,7 +75,7 @@ def print_top_topic_words(H, vectorizer, num_words=100):
     """
 
     word_list = vectorizer.get_feature_names()
-    top_word_indices = get_top_topic_words(H)
+    top_word_indices = get_top_topic_words(H)[:, :-n_words - 1:-1]
     top_words = [[word_list[word] for word in topic] for topic in top_word_indices]
 
     topic_number = 0
@@ -194,6 +194,10 @@ if __name__ == "__main__":
     print("Saving summaries to disk based on topic...")
     dump_topic_corpus(W, summaries)
     print(f" -> {len(summaries)} files created!\n")
+
+    print_top_topic_words(H, vectorizer)
+    with open("features_super_hard_split.txt", "w") as f:
+        f.writelines(vectorizer.get_feature_names())
 
     print("Done!")
 
