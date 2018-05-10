@@ -17,17 +17,66 @@ from nltk.stem.porter import PorterStemmer
 import numpy as np
 
 
+def split_sentences(doc):
+    """
+    Splits a document into sentences.
+    :param doc: The document to be split
+    :return: A list of sentences.
+    """
+    return re.split(r"[\.\?\!]\s+", doc)
+
+
+def split_tokens_hard(text):
+    """
+    Splits into tokens based on any character that is NOT a letter, number, "-", or ".".
+    :param text: The text to be tokenized
+    :return: A list of tokens
+    """
+    return [token for token in re.split(r"[^a-zA-Z0-9\-\.]+|[\-\.]{3,}|\s[\-\.]+|[\-\.]+\s", text) if token]  # list comprehension removes empty strings
+
+
+def split_tokens_soft(text):
+    """
+    Splits into tokens, still allowing for special characters (for acronym extraction).
+    :param text: The text to be tokenized.
+    :return: A list of tokens.
+    """
+    return [token for token in re.split(r"[\s/\-\+,\\\"\:\;\[\]]+", text) if token]  # list comprehension removes empty strings
+
+
+
 stemmer = PorterStemmer()
 def tfidf_tokenize(text):
-    """Tokenizes a document."""
+    """
+    Tokenizes a document to be converted to a TF-IDF vector.
+    :param text: The text/document to be tokenized.
+    :return: A list of stemmed tokens.
+    """
     return [stemmer.stem(token) for token in split_tokens_hard(text)]
 
 
 
-def get_top_topic_words(H, words, num_words=100):
+def get_top_topic_words(H):
+    """
+    Gets a matrix of the most relevent word indices (columns) for each topic (rows).
+    :param H: The H matrix from NMF.
+    :return: A matrix of the most relevent word indices (columns) for each topic (rows).
+    """
+    return np.argsort(H, axis=1)[:, ::-1]
 
-    word_indices = np.argsort(H, axis=1)[:, :-num_words - 1:-1]
-    top_words = [[words[word] for word in topic] for topic in word_indices]
+
+def print_top_topic_words(H, vectorizer, num_words=100):
+    """
+    Prints the top unique words for predicting a topic.
+    :param H: The H matrix from NMF.
+    :param vectorizer: The TF-IDF vectorizer to get the word list from.
+    :param num_words: Total number of words to look at.
+    :return: None
+    """
+
+    word_list = vectorizer.get_feature_names()
+    top_word_indices = get_top_topic_words(H)
+    top_words = [[word_list[word] for word in topic] for topic in top_word_indices]
 
     topic_number = 0
     for topic in top_words:
@@ -40,20 +89,12 @@ def get_top_topic_words(H, words, num_words=100):
 
 
 
-def print_top_docs(W, titles):
-
-    indexes = np.argsort(W, axis=0)[:-11:-1, :]
-
-    for column in range(indexes.shape[1]):
-        print("Top articles for topic {0}:".format(column))
-        for i in indexes[:, column]:
-            print(titles[i])
-        print()
-
-
-
 
 def get_stopwords():
+    """
+    Reads the stopwords from stopwords.txt and combines them with the ENGLISH_STOP_WORDS in sklearn.
+    :return: A set of stopwords.
+    """
 
     with open("stopwords.txt", "r") as f:
         custom_stopwords = {word for word in f.readline()}
@@ -62,26 +103,40 @@ def get_stopwords():
 
 
 
-def summarize_doc(doc, vectorizer):
+def summarize_doc(doc, vectorizer, n_sentences = 10):
+    """
+    Auto summarizes a document.
+    :param doc: The document to be summarized.
+    :param vectorizer: The TF-IDF vectorizer to be used for feature extraction.
+    :param n_sentences: Number of sentences to include in the summary.
+    :return: A string containing the best sentences, in order.
+    """
 
     sentences = split_sentences(doc)
     sentence_tfidf = vectorizer.transform(sentences).toarray()
     # sentences_wordcounts = np.count_nonzero(sentence_tfidf, axis=1)
 
     sentence_scores = np.sum(sentence_tfidf, axis=1).flatten()  # / sentences_wordcounts
-    best_sentences = [f"{'*' * 120}\n{'*' * 120}\n{'*' * 120}\n{sentences[i]}." for i in np.sort(np.argsort(sentence_scores)[:-11:-1])]
+    best_sentences = [f"{'*' * 120}\n{'*' * 120}\n{'*' * 120}\n{sentences[i]}." for i in np.sort(np.argsort(sentence_scores)[:-n_sentences - 1:-1])]
 
     return "\n\n\n".join(best_sentences)
 
 
-def sumarize_corpus(corpus):
+
+def sumarize_corpus(corpus, n_sentences=10):
+    """
+    Summarizes an entire corpus.  Displays a progress bar.
+    :param corpus: The corpus to be summarized
+    :param n_sentences: Number of sentences to include in the summary.
+    :return: A corpus of summaries
+    """
 
     summaries = []
     n_docs = len(corpus)
     completed = 0
 
     for doc in corpus:
-        summaries.append(summarize_doc(doc, vectorizer))
+        summaries.append(summarize_doc(doc, vectorizer, n_sentences))
         completed += 1
         progress_bar(completed, n_docs)
 
@@ -91,7 +146,13 @@ def sumarize_corpus(corpus):
 
 
 
-def dump_topic_summaries(W, summaries):
+def dump_topic_corpus(W, corpus):
+    """
+    Saves the corpus to output/<topic #>/<filename>.txt, organized by topic.
+    :param W: The W matrix from NMF.
+    :param corpus: The corpus to be saved
+    :return: None
+    """
 
     doc_topics = np.argmax(W, axis=1)
 
@@ -103,7 +164,7 @@ def dump_topic_summaries(W, summaries):
 
         filename = os.path.join(path, f"{i}.txt".rjust(7, "0"))
         with open(filename, "w") as f:
-            f.write(summaries[i])
+            f.write(corpus[i])
 
 
 
@@ -131,7 +192,7 @@ if __name__ == "__main__":
     summaries = sumarize_corpus(corpus)
     print(f" -> {len(summaries)} documents summarized!\n")
     print("Saving summaries to disk based on topic...")
-    dump_topic_summaries(W, summaries)
+    dump_topic_corpus(W, summaries)
     print(f" -> {len(summaries)} files created!\n")
 
     print("Done!")
