@@ -10,7 +10,6 @@ from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 from src.data import *
 from src.globals import *
 
-import matplotlib.pyplot as plt
 import pickle
 
 import re
@@ -44,16 +43,19 @@ def stem(token):
     if token.endswith("s") and len(token) > 5 and not token.endswith("ss"):
         return token[:-1]
 
+    # if it's too long, it's probably a mashup of words, return a stopword
+    if len(token) > 16:
+        return "a"
+
     return token
 
 
-def pickle_save(corpus, ids, vectorizer, corpus_tfidf, model, W):
+def pickle_save(doc_ids, corpus, vectorizer, corpus_tfidf, model, W):
 
-    with open("pickle/corpus.pkl", "wb") as f:
-        pickle.dump(corpus, f)
+    save_corpus_pickle(doc_ids, corpus)
 
-    with open("pickle/ids.pkl", "wb") as f:
-        pickle.dump(ids, f)
+    if PICKLING:
+        return
 
     with open("pickle/tfidf.pkl", "wb") as f:
         pickle.dump(vectorizer, f)
@@ -382,8 +384,7 @@ def main():
     model, W, H = nmf_model(corpus_tfidf, n_topics)
     corpus_topics = get_corpus_top_topics(W)
 
-    if not PICKLING:
-        pickle_save(corpus, doc_ids, vectorizer, corpus_tfidf, model, W)
+    pickle_save(doc_ids, corpus, vectorizer, corpus_tfidf, model, W)
 
     if do_summaries:
         summaries = sumarize_corpus(corpus, vectorizer)
@@ -392,12 +393,13 @@ def main():
 
     if DEBUG_LEVEL > 1:
          print_top_topic_words(H, word_list, 50)
-         debug(get_tfidf_topic_words(corpus_tfidf, corpus_topics, word_list, n_topics, 15), 2)
+         print(get_tfidf_topic_words(corpus_tfidf, corpus_topics, word_list, n_topics, 15))
 
     build_word_clouds(corpus_tfidf, corpus_topics, H, word_list, n_topics)
 
 
     debug("Done!")
+
 
 if __name__ == "__main__":
     main()

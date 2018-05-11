@@ -11,8 +11,7 @@ from src.globals import *
 
 acronyms = {}
 
-# corpus, doc_ids = get_corpus()
-doc_ids, corpus = load_pickle_corpus()
+doc_ids, corpus = get_corpus()
 completed = 0
 total = len(corpus)
 

@@ -59,15 +59,16 @@ def get_corpus():
 
 
 
-def load_pickle_corpus():
+def save_corpus_pickle(doc_ids, corpus):
 
-    with open("pickle/corpus.pkl", "rb") as f:
-        corpus = pickle.load(f)
+    if PICKLING_CORPUS:
+        return
 
-    with open("pickle/ids.pkl", "rb") as f:
-        doc_ids = pickle.load(f)
+    with open("pickle/doc_ids.pkl", "wb") as f:
+        pickle.dump(doc_ids, f)
 
-    return doc_ids, corpus
+    with open("pickle/corpus.pkl", "wb") as f:
+        pickle.dump(corpus, f)
 
 
 
