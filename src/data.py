@@ -28,6 +28,8 @@ def get_corpus():
     q = """
            SELECT id, text
            FROM import.fbo_files
+           WHERE text IS NOT NULL
+             AND text != ''
            LIMIT 10000
         """
 
@@ -38,11 +40,12 @@ def get_corpus():
     corpus = []
 
     for row in cursor:
-        doc_ids.append(row[0])
-        corpus.append(row[1])
+        if row[0] and row[1]:
+            doc_ids.append(row[0])
+            corpus.append(row[1])
 
     debug(f" -> {len(corpus)} documents loaded!", 1)
-    return list(doc_ids), list(corpus)
+    return doc_ids, corpus
 
 
 if __name__ == "__main__":

@@ -49,10 +49,10 @@ def stem(token):
 
 def load_pickle_corpus():
 
-    with open("corpus.pkl", "rb") as f:
+    with open("pickle/corpus.pkl", "rb") as f:
         corpus = pickle.load(f)
 
-    with open("ids.pkl", "rb") as f:
+    with open("pickle/ids.pkl", "rb") as f:
         doc_ids = pickle.load(f)
 
     return doc_ids, corpus
@@ -60,28 +60,47 @@ def load_pickle_corpus():
 
 def load_pickle_vectorizer():
 
-    with open("tfidf.pkl", "rb") as f:
+    with open("pickle/tfidf.pkl", "rb") as f:
         vectorizer = pickle.load(f)
 
-    with open("corpus_tfidf.pkl", "rb") as f:
+    with open("pickle/corpus_tfidf.pkl", "rb") as f:
         corpus_tfidf = pickle.load(f)
 
     return vectorizer, corpus_tfidf
 
 
-def pickle_save(corpus, ids, vectorizer, corpus_tfidf):
+def load_pickle_nmf():
 
-    with open("corpus.pkl", "wb") as f:
+    with open("pickle/nmf.pkl", "rb") as f:
+        nmf_model = pickle.load(f)
+
+    with open("pickle/W.pkl", "rb") as f:
+        W = pickle.load(f)
+
+    H = nmf_model.components_
+
+    return nmf_model, W, H
+
+
+def pickle_save(corpus, ids, vectorizer, corpus_tfidf, model, W):
+
+    with open("pickle/corpus.pkl", "wb") as f:
         pickle.dump(corpus, f)
 
-    with open("ids.pkl", "wb") as f:
+    with open("pickle/ids.pkl", "wb") as f:
         pickle.dump(ids, f)
 
-    with open("tfidf.pkl", "wb") as f:
+    with open("pickle/tfidf.pkl", "wb") as f:
         pickle.dump(vectorizer, f)
 
-    with open("corpus_tfidf.pkl", "wb") as f:
+    with open("pickle/corpus_tfidf.pkl", "wb") as f:
         pickle.dump(corpus_tfidf, f)
+
+    with open("pickle/nmf.pkl", "wb") as f:
+        pickle.dump(model, f)
+
+    with open("pickle/W.pkl", "wb") as f:
+        pickle.dump(W, f)
 
 
 def split_sentences(doc):
@@ -161,7 +180,7 @@ def get_stopwords():
 
 
 
-def summarize_doc(doc, vectorizer, n_sentences=20):
+def summarize_doc(doc, vectorizer, n_sentences=10):
     """
     Auto summarizes a document.
     :param doc: The document to be summarized.
@@ -181,7 +200,7 @@ def summarize_doc(doc, vectorizer, n_sentences=20):
 
 
 
-def sumarize_corpus(corpus, vectorizer, n_sentences=20):
+def sumarize_corpus(corpus, vectorizer, n_sentences=10):
     """
     Summarizes an entire corpus.  Displays a progress bar.
     :param corpus: The corpus to be summarized
@@ -227,7 +246,7 @@ def get_corpus_topic_strengths(W):
 
 
 
-def dump_topic_corpus(corpus_topics, corpus):
+def dump_topic_corpus(corpus_topics, corpus, doc_ids):
     """
     Saves the corpus to output/<topic #>/<filename>.txt, organized by topic.
     :param W: The W matrix from NMF.
@@ -243,7 +262,7 @@ def dump_topic_corpus(corpus_topics, corpus):
         if not os.path.isdir(path):
             os.mkdir(path)
 
-        filename = os.path.join(path, f"{i}.txt".rjust(7, "0"))
+        filename = os.path.join(path, f"{doc_ids[i]}.txt")
         with open(filename, "w") as f:
             f.write(corpus[i])
 
@@ -351,25 +370,39 @@ def main():
 # if __name__ == "__main__":
 
     DEBUG_LEVEL = 2
+    pickling = False
     n_topics = 100
 
-    # doc_ids, corpus = load_pickle_corpus()
-    doc_ids, corpus = get_corpus()
+    if pickling:
+        doc_ids, corpus = load_pickle_corpus()
+    else:
+        doc_ids, corpus = get_corpus()
 
-    # vectorizer, corpus_tfidf = load_pickle_vectorizer()
-    vectorizer, corpus_tfidf = vectorize(corpus)
+    if pickling:
+        vectorizer, corpus_tfidf = load_pickle_vectorizer()
+    else:
+        vectorizer, corpus_tfidf = vectorize(corpus)
     word_list = np.array(vectorizer.get_feature_names())
-    pickle_save(corpus, doc_ids, vectorizer, corpus_tfidf)
 
     if DEBUG_LEVEL > 1:
         dump_features(word_list)
     # exit(0)
 
-    summaries = sumarize_corpus(corpus, vectorizer)
-
-    model, W, H = nmf_model(corpus_tfidf, n_topics)
+    if pickling:
+        model, W, H = load_pickle_nmf()
+    else:
+        model, W, H = nmf_model(corpus_tfidf, n_topics)
     corpus_topics = get_corpus_top_topics(W)
-    dump_topic_corpus(corpus_topics, summaries)
+
+    if not pickling:
+        pickle_save(corpus, doc_ids, vectorizer, corpus_tfidf, model, W)
+
+    summaries = sumarize_corpus(corpus, vectorizer)
+    dump_topic_corpus(corpus_topics, summaries, doc_ids)
+    del summaries  # save some RAM for the wordclouds
+
+    build_word_clouds(corpus_tfidf, corpus_topics, word_list, n_topics)
+
 
     # if DEBUG_LEVEL > 1:
     #     print_top_topic_words(H, word_list)
