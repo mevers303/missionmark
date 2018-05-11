@@ -7,7 +7,7 @@ from sys import stdout
 
 
 DEBUG_LEVEL = 1
-PICKLING = 1
+PICKLING = 0
 PICKLING_CORPUS = 1
 
 

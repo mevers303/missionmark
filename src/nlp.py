@@ -50,26 +50,6 @@ def stem(token):
     return token
 
 
-def pickle_save(doc_ids, corpus, vectorizer, corpus_tfidf, model, W):
-
-    save_corpus_pickle(doc_ids, corpus)
-
-    if PICKLING:
-        return
-
-    with open("pickle/tfidf.pkl", "wb") as f:
-        pickle.dump(vectorizer, f)
-
-    with open("pickle/corpus_tfidf.pkl", "wb") as f:
-        pickle.dump(corpus_tfidf, f)
-
-    with open("pickle/nmf.pkl", "wb") as f:
-        pickle.dump(model, f)
-
-    with open("pickle/W.pkl", "wb") as f:
-        pickle.dump(W, f)
-
-
 def split_sentences(doc):
     """
     Splits a document into sentences.
@@ -309,10 +289,8 @@ def build_word_clouds(corpus_tfidf, corpus_topics, topic_nmf_weights, word_list,
 
 def vectorize(corpus):
 
-    debug("Vectorizing keywords...")
-
     if PICKLING:
-        debug(" -> Loading cached corpus vector...")
+        debug("Loading cached vectorizer...")
 
         with open("pickle/tfidf.pkl", "rb") as f:
             vectorizer = pickle.load(f)
@@ -321,8 +299,17 @@ def vectorize(corpus):
             corpus_tfidf = pickle.load(f)
 
     else:
+        debug("Vectorizing keywords...")
+
         vectorizer = TfidfVectorizer(stop_words=get_stopwords(), tokenizer=tfidf_tokenize, max_df=.66, min_df=2, ngram_range=(1,1), sublinear_tf=True)
         corpus_tfidf = vectorizer.fit_transform(corpus)
+
+        debug("Caching vectorizer...")
+        with open("pickle/tfidf.pkl", "wb") as f:
+            pickle.dump(vectorizer, f)
+        with open("pickle/corpus_tfidf.pkl", "wb") as f:
+            pickle.dump(corpus_tfidf, f)
+        debug(" -> Vectorizer cached!", 2)
 
     debug(f" -> {corpus_tfidf.shape[1]} tokens found!", 1)
     return vectorizer, corpus_tfidf
@@ -344,10 +331,8 @@ def dump_features(word_list):
 
 def nmf_model(corpus_tfidf, n_topics, max_iter=500):
 
-    debug(f"Sorting into {n_topics} topics...")
-
     if PICKLING:
-        debug(" -> Loading cached model...")
+        debug("Loading cached topic model...")
         with open("pickle/nmf.pkl", "rb") as f:
             model = pickle.load(f)
 
@@ -357,11 +342,21 @@ def nmf_model(corpus_tfidf, n_topics, max_iter=500):
         H = model.components_
 
     else:
+        debug("Sorting corpus into topics...")
+
         model = NMF(n_components=n_topics, max_iter=max_iter)
         W = model.fit_transform(corpus_tfidf)
         H = model.components_
+        debug(f" -> {model.n_iter_} iterations completed!", 1)
 
-    debug(f" -> {model.n_iter_} iterations completed!", 1)
+        debug("Caching topic model...")
+        with open("pickle/nmf.pkl", "wb") as f:
+            pickle.dump(model, f)
+        with open("pickle/W.pkl", "wb") as f:
+            pickle.dump(W, f)
+        debug(" -> Topic model cached!", 2)
+
+    debug(f" -> {n_topics} topics sorted!")
     return model, W, H
 
 
@@ -383,8 +378,6 @@ def main():
 
     model, W, H = nmf_model(corpus_tfidf, n_topics)
     corpus_topics = get_corpus_top_topics(W)
-
-    pickle_save(doc_ids, corpus, vectorizer, corpus_tfidf, model, W)
 
     if do_summaries:
         summaries = sumarize_corpus(corpus, vectorizer)

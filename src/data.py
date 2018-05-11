@@ -12,10 +12,8 @@ import pickle
 
 def get_corpus():
 
-    debug("Loading corpus...")
-
     if PICKLING_CORPUS:
-        debug(" -> Loading cached corpus...")
+        debug("Loading cached corpus...")
         with open("pickle/corpus.pkl", "rb") as f:
             corpus = pickle.load(f)
 
@@ -23,6 +21,7 @@ def get_corpus():
             doc_ids = pickle.load(f)
 
     else:
+        debug("Loading corpus...")
         with open("/home/mark/missionmark_db_creds", "r") as f:
             host = f.readline()[:-1]
             dbname = f.readline()[:-1]
@@ -55,20 +54,18 @@ def get_corpus():
 
 
     debug(f" -> {len(corpus)} documents loaded!", 1)
+
+
+    if not PICKLING_CORPUS:
+        debug("Caching corpus...")
+        with open("pickle/doc_ids.pkl", "wb") as f:
+            pickle.dump(doc_ids, f)
+        with open("pickle/corpus.pkl", "wb") as f:
+            pickle.dump(corpus, f)
+        debug(" -> Corpus cached!", 2)
+
+
     return doc_ids, corpus
-
-
-
-def save_corpus_pickle(doc_ids, corpus):
-
-    if PICKLING_CORPUS:
-        return
-
-    with open("pickle/doc_ids.pkl", "wb") as f:
-        pickle.dump(doc_ids, f)
-
-    with open("pickle/corpus.pkl", "wb") as f:
-        pickle.dump(corpus, f)
 
 
 
