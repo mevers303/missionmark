@@ -333,6 +333,8 @@ def dump_features(word_list):
     debug(f" -> Wrote {len(word_list)} to file!")
 
 
+
+
 def nmf_model(corpus_tfidf, n_topics, max_iter=500):
 
     debug(f"Sorting into {n_topics} topics...")
@@ -363,10 +365,9 @@ def main():
         dump_features(word_list)
     # exit(0)
 
-    model, W, H = nmf_model(corpus_tfidf, n_topics)
-
     summaries = sumarize_corpus(corpus, vectorizer)
 
+    model, W, H = nmf_model(corpus_tfidf, n_topics)
     corpus_topics = get_corpus_top_topics(W)
     dump_topic_corpus(corpus_topics, summaries)
 
