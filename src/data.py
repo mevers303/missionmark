@@ -29,7 +29,7 @@ def get_test_data():
     q = """
            SELECT id, text
            FROM import.fbo_files
-           LIMIT 100000
+           LIMIT 10000
         """
 
     cursor.execute(q)
@@ -47,7 +47,7 @@ def get_all_data():
     q = """
            SELECT id, text
            FROM import.fbo_files
-           LIMIT 200000
+           LIMIT 10000
         """
 
     cursor.execute(q)

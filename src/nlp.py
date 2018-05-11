@@ -69,10 +69,13 @@ def load_pickle_vectorizer():
     return vectorizer, corpus_tfidf
 
 
-def pickle_save(corpus, vectorizer, corpus_tfidf):
+def pickle_save(corpus, ids, vectorizer, corpus_tfidf):
 
     with open("corpus.pkl", "wb") as f:
         pickle.dump(corpus, f)
+
+    with open("ids.pkl", "wb") as f:
+        pickle.dump(ids, f)
 
     with open("tfidf.pkl", "wb") as f:
         pickle.dump(vectorizer, f)
@@ -178,13 +181,15 @@ def summarize_doc(doc, vectorizer, n_sentences=20):
 
 
 
-def sumarize_corpus(corpus, n_sentences=20):
+def sumarize_corpus(corpus, vectorizer, n_sentences=20):
     """
     Summarizes an entire corpus.  Displays a progress bar.
     :param corpus: The corpus to be summarized
     :param n_sentences: Number of sentences to include in the summary.
     :return: A corpus of summaries
     """
+
+    debug("Summarizing documents...")
 
     summaries = []
     n_docs = len(corpus)
@@ -195,6 +200,7 @@ def sumarize_corpus(corpus, n_sentences=20):
         completed += 1
         progress_bar(completed, n_docs)
 
+    debug(f" -> {len(summaries)} documents summarized!", 1)
     return summaries
 
 
@@ -229,6 +235,8 @@ def dump_topic_corpus(corpus_topics, corpus):
     :return: None
     """
 
+    debug("Saving summaries to disk based on topic...")
+
     for i in range(corpus_topics.size):
 
         path = os.path.join("output", str(corpus_topics[i]).rjust(2, "0"))
@@ -238,6 +246,8 @@ def dump_topic_corpus(corpus_topics, corpus):
         filename = os.path.join(path, f"{i}.txt".rjust(7, "0"))
         with open(filename, "w") as f:
             f.write(corpus[i])
+
+    debug(f" -> {len(corpus)} files created!", 1)
 
 
 def get_tfidf_topic_weights(corpus_tfidf, corpus_topics, n_topics):
@@ -274,27 +284,69 @@ def get_tfidf_topic_words(corpus_tfidf, corpus_topics, word_list, n_topics, n_wo
 
 
 
-def build_word_clouds():
+def build_word_clouds(corpus_tfidf, corpus_topics, word_list, n_topics):
 
-    
+    debug("Generating word clouds...")
+    completed = 0
+    progress_bar(completed, n_topics)
+
+    topic_tfidf_weights = get_tfidf_topic_words(corpus_tfidf, corpus_topics, n_topics)
+
+    for topic_i in range(n_topics):
+        topic_top_words_i = np.argsort(topic_tfidf_weights)[::-1]
 
         wc = WordCloud(background_color="black", max_words=2000, width=2000, height=1000)
-        wc.fit_words({word_list[word_i]: topic_word_scores[word_i] for word_i in topic_top_words_i if topic_word_scores[word_i]})
+        wc.fit_words({word_list[word_i]: topic_tfidf_weights[word_i] for word_i in topic_top_words_i if topic_tfidf_weights[word_i]})
         wc.to_file(os.path.join("output/" + str(topic_i).rjust(2, "0"), "wordcloud.png"))
 
         # plt.imshow(wc)
         # plt.axis("off")
         # plt.show()
 
-    return topic_tfidf_words
+        completed += 1
+        progress_bar(completed, n_topics)
+
+    debug(f" -> {n_topics} word clouds generated!")
 
 
 
+def vectorize(corpus):
+
+    debug("Vectorizing keywords...")
+
+    vectorizer = TfidfVectorizer(stop_words=get_stopwords(), tokenizer=tfidf_tokenize, max_df=.9, min_df=2, ngram_range=(1,1))
+    corpus_tfidf = vectorizer.fit_transform(corpus)
+
+    debug(f" -> {corpus_tfidf.shape[1]} tokens found!", 1)
+    return vectorizer, corpus_tfidf
 
 
 
-# def main():
-if __name__ == "__main__":
+def dump_features(word_list):
+
+    debug("Writing word list to features.txt...")
+
+    with open("features.txt", "w") as f:
+        for word in word_list:
+            f.write(word + "\n")
+
+    debug(f" -> Wrote {len(word_list)} to file!")
+
+
+def nmf_model(corpus_tfidf, n_topics, max_iter=500):
+
+    debug(f"Sorting into {n_topics} topics...")
+
+    model = NMF(n_components=n_topics, max_iter=max_iter)
+    W = model.fit_transform(corpus_tfidf)
+    H = model.components_
+
+    debug(f" -> {model.n_iter_} iterations completed!", 1)
+    return model, W, H
+
+
+def main():
+# if __name__ == "__main__":
 
     DEBUG_LEVEL = 2
     n_topics = 100
@@ -303,41 +355,28 @@ if __name__ == "__main__":
     corpus, ids = get_test_data()
 
     # vectorizer, corpus_tfidf = load_pickle_vectorizer()
-    debug("Vectorizing keywords...")
-    vectorizer = TfidfVectorizer(stop_words=get_stopwords(), tokenizer=tfidf_tokenize, max_df=.9, min_df=2, ngram_range=(1,1))
-    corpus_tfidf = vectorizer.fit_transform(corpus)
+    vectorizer, corpus_tfidf = vectorize(corpus)
     word_list = np.array(vectorizer.get_feature_names())
-    debug(f" -> {corpus_tfidf.shape[1]} tokens found!", 1)
+    pickle_save(corpus, ids, vectorizer, corpus_tfidf)
 
     if DEBUG_LEVEL > 1:
-        with open("features.txt", "w") as f:
-            for word in word_list:
-                f.write(word + "\n")
-    pickle_save(corpus, ids, vectorizer, corpus_tfidf)
-    exit(0)
+        dump_features(word_list)
+    # exit(0)
 
-    debug(f"Sorting into {n_topics} topics...")
-    model = NMF(n_components=n_topics, max_iter=500)
-    W = model.fit_transform(corpus_tfidf)
-    H = model.components_
-    debug(f" -> {model.n_iter_} iterations completed!", 1)
+    model, W, H = nmf_model(corpus_tfidf, n_topics)
 
-    debug("Summarizing documents...")
-    summaries = sumarize_corpus(corpus)
-    debug(f" -> {len(summaries)} documents summarized!", 1)
+    summaries = sumarize_corpus(corpus, vectorizer)
 
-    debug("Saving summaries to disk based on topic...")
     corpus_topics = get_corpus_top_topics(W)
     dump_topic_corpus(corpus_topics, summaries)
-    debug(f" -> {len(summaries)} files created!", 1)
 
-    if DEBUG_LEVEL > 1:
-        # print_top_topic_words(H, word_list)
-        get_tfidf_topic_words(corpus_tfidf, corpus_topics, word_list, n_topics)
+    # if DEBUG_LEVEL > 1:
+    #     print_top_topic_words(H, word_list)
+    #     get_tfidf_topic_words(corpus_tfidf, corpus_topics, word_list, n_topics)
 
     debug("Done!")
 
 
 
-# if __name__ == "__main__":
-#     main()
+if __name__ == "__main__":
+    main()
