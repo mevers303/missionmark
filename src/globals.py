@@ -7,6 +7,8 @@ from sys import stdout
 
 
 DEBUG_LEVEL = 1
+PICKLING = 1
+PICKLING_CORPUS = 1
 
 
 _PROGRESS_BAR_LAST_I = 100

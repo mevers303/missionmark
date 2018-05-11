@@ -47,30 +47,6 @@ def stem(token):
     return token
 
 
-def load_pickle_vectorizer():
-
-    with open("pickle/tfidf.pkl", "rb") as f:
-        vectorizer = pickle.load(f)
-
-    with open("pickle/corpus_tfidf.pkl", "rb") as f:
-        corpus_tfidf = pickle.load(f)
-
-    return vectorizer, corpus_tfidf
-
-
-def load_pickle_nmf():
-
-    with open("pickle/nmf.pkl", "rb") as f:
-        nmf_model = pickle.load(f)
-
-    with open("pickle/W.pkl", "rb") as f:
-        W = pickle.load(f)
-
-    H = nmf_model.components_
-
-    return nmf_model, W, H
-
-
 def pickle_save(corpus, ids, vectorizer, corpus_tfidf, model, W):
 
     with open("pickle/corpus.pkl", "wb") as f:
@@ -326,8 +302,18 @@ def vectorize(corpus):
 
     debug("Vectorizing keywords...")
 
-    vectorizer = TfidfVectorizer(stop_words=get_stopwords(), tokenizer=tfidf_tokenize, max_df=.66, min_df=2, ngram_range=(1,1), sublinear_tf=True)
-    corpus_tfidf = vectorizer.fit_transform(corpus)
+    if PICKLING:
+        debug(" -> Loading cached corpus vector...")
+
+        with open("pickle/tfidf.pkl", "rb") as f:
+            vectorizer = pickle.load(f)
+
+        with open("pickle/corpus_tfidf.pkl", "rb") as f:
+            corpus_tfidf = pickle.load(f)
+
+    else:
+        vectorizer = TfidfVectorizer(stop_words=get_stopwords(), tokenizer=tfidf_tokenize, max_df=.66, min_df=2, ngram_range=(1,1), sublinear_tf=True)
+        corpus_tfidf = vectorizer.fit_transform(corpus)
 
     debug(f" -> {corpus_tfidf.shape[1]} tokens found!", 1)
     return vectorizer, corpus_tfidf
@@ -351,9 +337,20 @@ def nmf_model(corpus_tfidf, n_topics, max_iter=500):
 
     debug(f"Sorting into {n_topics} topics...")
 
-    model = NMF(n_components=n_topics, max_iter=max_iter)
-    W = model.fit_transform(corpus_tfidf)
-    H = model.components_
+    if PICKLING:
+        debug(" -> Loading cached model...")
+        with open("pickle/nmf.pkl", "rb") as f:
+            model = pickle.load(f)
+
+        with open("pickle/W.pkl", "rb") as f:
+            W = pickle.load(f)
+
+        H = model.components_
+
+    else:
+        model = NMF(n_components=n_topics, max_iter=max_iter)
+        W = model.fit_transform(corpus_tfidf)
+        H = model.components_
 
     debug(f" -> {model.n_iter_} iterations completed!", 1)
     return model, W, H
@@ -363,36 +360,27 @@ def main():
 # if __name__ == "__main__":
 
     DEBUG_LEVEL = 2
-    pickling = False
+    pickling = True
     n_topics = 100
 
-    if pickling:
-        doc_ids, corpus = load_pickle_corpus()
-    else:
-        doc_ids, corpus = get_corpus()
+    doc_ids, corpus = get_corpus()
 
-    if pickling:
-        vectorizer, corpus_tfidf = load_pickle_vectorizer()
-    else:
-        vectorizer, corpus_tfidf = vectorize(corpus)
+    vectorizer, corpus_tfidf = vectorize(corpus)
     word_list = np.array(vectorizer.get_feature_names())
 
     if DEBUG_LEVEL > 1:
         dump_features(word_list)
     # exit(0)
 
-    if pickling:
-        model, W, H = load_pickle_nmf()
-    else:
-        model, W, H = nmf_model(corpus_tfidf, n_topics)
+    model, W, H = nmf_model(corpus_tfidf, n_topics)
     corpus_topics = get_corpus_top_topics(W)
 
     if not pickling:
         pickle_save(corpus, doc_ids, vectorizer, corpus_tfidf, model, W)
 
-    # summaries = sumarize_corpus(corpus, vectorizer)
-    # dump_topic_corpus(corpus_topics, summaries, doc_ids)
-    # del summaries  # save some RAM for the wordclouds
+    summaries = sumarize_corpus(corpus, vectorizer)
+    dump_topic_corpus(corpus_topics, summaries, doc_ids)
+    del summaries  # save some RAM for the wordclouds
 
     build_word_clouds(corpus_tfidf, corpus_topics, word_list, n_topics)
 
