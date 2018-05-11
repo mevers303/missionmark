@@ -159,7 +159,8 @@ def summarize_doc(doc, vectorizer, n_sentences=10):
     # sentences_wordcounts = np.count_nonzero(sentence_tfidf, axis=1)
 
     sentence_scores = sentence_tfidf.sum(axis=1).A1  # / sentences_wordcounts
-    best_sentences = [f"{'*' * 120}\n{'*' * 120}\n{'*' * 120}\n{sentences[i]}." for i in np.sort(np.argsort(sentence_scores)[:-n_sentences - 1:-1])]
+    best_sentences_i = np.sort(np.argsort(sentence_scores)[:-n_sentences - 1:-1])
+    best_sentences = [f"{'*' * 120}\n{'*' * 120}\n{'*' * 120}\n{sentences[i]}." for i in best_sentences_i]
 
     return "\n\n\n".join(best_sentences)
 
@@ -206,7 +207,7 @@ def get_corpus_topic_strengths(W):
     :param W:
     :return:
     """
-    return np.argsort(W, axis=1)[::-1]
+    return np.argsort(W, axis=1)[:, ::-1]
 
 
 
@@ -251,14 +252,13 @@ def get_tfidf_topic_weights(corpus_tfidf, corpus_topics, n_topics):
 
 def get_tfidf_topic_words(corpus_tfidf, corpus_topics, word_list, n_topics, n_words=10):
 
-    topic_tfidf_weights = get_tfidf_topic_words(corpus_tfidf, corpus_topics, n_topics)
+    topic_tfidf_weights = get_tfidf_topic_weights(corpus_tfidf, corpus_topics, n_topics)
+    topic_top_words_i = np.argsort(topic_tfidf_weights, axis=1)[:, ::-1]
     top_words = []
 
     for topic_i in range(n_topics):
 
-        topic_top_words_i = np.argsort(topic_tfidf_weights)[::-1]
-
-        topic_words = word_list[topic_top_words_i[:n_words]]
+        topic_words = word_list[topic_top_words_i[topic_i, :n_words]]
         top_words.append(topic_words)
 
         debug(f"TF-IDF words for topic {topic_i}:")
@@ -268,28 +268,35 @@ def get_tfidf_topic_words(corpus_tfidf, corpus_topics, word_list, n_topics, n_wo
 
 
 
-def build_word_clouds(corpus_tfidf, corpus_topics, word_list, n_topics):
+def build_word_clouds(corpus_tfidf, corpus_topics, topic_nmf_weights, word_list, n_topics):
 
-    debug("Generating word clouds...")
+    debug("Generating topic word clouds... (this may take a while)")
     completed = 0
     progress_bar(completed, n_topics)
 
     topic_tfidf_weights = get_tfidf_topic_weights(corpus_tfidf, corpus_topics, n_topics)
-    topic_top_words_i = np.argsort(topic_tfidf_weights, axis=1)[::-1]
+    topic_top_tfidf_words_i = np.argsort(topic_tfidf_weights, axis=1)[:, ::-1]
+    topic_top_nmf_words_i = np.argsort(topic_nmf_weights, axis=1)[:, ::-1]
 
     for topic_i in range(n_topics):
+
+        path = os.path.join("output", str(topic_i).rjust(2, "0"))
+        if not os.path.isdir(path):
+            os.mkdir(path)
+
+        # nmf wordcloud
+        wc = WordCloud(background_color="black", max_words=666, width=2000, height=1000)
+        wc.fit_words({word_list[word_i]: topic_nmf_weights[topic_i, word_i] for word_i in topic_top_nmf_words_i[topic_i] if topic_nmf_weights[topic_i, word_i]})
+        wc.to_file(os.path.join(path, "nmf_wordcloud.png"))
 
         # an empty topic...
         if not topic_tfidf_weights[topic_i].sum():
             continue
 
-        wc = WordCloud(background_color="black", max_words=5000, width=2000, height=1000)
-        wc.fit_words({word_list[word_i]: topic_tfidf_weights[topic_i, word_i] for word_i in topic_top_words_i[topic_i] if topic_tfidf_weights[topic_i, word_i]})
-        wc.to_file(os.path.join("output/" + str(topic_i).rjust(2, "0"), "wordcloud.png"))
-
-        # plt.imshow(wc)
-        # plt.axis("off")
-        # plt.show()
+        # tf-idf wordcloud
+        wc = WordCloud(background_color="black", max_words=666, width=2000, height=1000)
+        wc.fit_words({word_list[word_i]: topic_tfidf_weights[topic_i, word_i] for word_i in topic_top_tfidf_words_i[topic_i] if topic_tfidf_weights[topic_i, word_i]})
+        wc.to_file(os.path.join(path, "tf-idf_wordcloud.png"))
 
         completed += 1
         progress_bar(completed, n_topics)
@@ -360,8 +367,8 @@ def main():
 # if __name__ == "__main__":
 
     DEBUG_LEVEL = 2
-    pickling = True
     n_topics = 100
+    do_summaries = False
 
     doc_ids, corpus = get_corpus()
 
@@ -375,23 +382,22 @@ def main():
     model, W, H = nmf_model(corpus_tfidf, n_topics)
     corpus_topics = get_corpus_top_topics(W)
 
-    if not pickling:
+    if not PICKLING:
         pickle_save(corpus, doc_ids, vectorizer, corpus_tfidf, model, W)
 
-    summaries = sumarize_corpus(corpus, vectorizer)
-    dump_topic_corpus(corpus_topics, summaries, doc_ids)
-    del summaries  # save some RAM for the wordclouds
-
-    build_word_clouds(corpus_tfidf, corpus_topics, word_list, n_topics)
-
+    if do_summaries:
+        summaries = sumarize_corpus(corpus, vectorizer)
+        dump_topic_corpus(corpus_topics, summaries, doc_ids)
+        del summaries  # save some RAM for the wordclouds
 
     if DEBUG_LEVEL > 1:
          print_top_topic_words(H, word_list, 50)
          debug(get_tfidf_topic_words(corpus_tfidf, corpus_topics, word_list, n_topics, 15), 2)
 
+    build_word_clouds(corpus_tfidf, corpus_topics, H, word_list, n_topics)
+
+
     debug("Done!")
-
-
 
 if __name__ == "__main__":
     main()
