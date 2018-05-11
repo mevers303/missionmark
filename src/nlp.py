@@ -289,7 +289,7 @@ def build_word_clouds(corpus_tfidf, corpus_topics, topic_nmf_weights, word_list,
 
 def vectorize(corpus):
 
-    if PICKLING:
+    if MODEL_PICKLING:
         debug("Loading cached vectorizer...")
 
         with open("pickle/tfidf.pkl", "rb") as f:
@@ -331,7 +331,7 @@ def dump_features(word_list):
 
 def nmf_model(corpus_tfidf, n_topics, max_iter=500):
 
-    if PICKLING:
+    if MODEL_PICKLING:
         debug("Loading cached topic model...")
         with open("pickle/nmf.pkl", "rb") as f:
             model = pickle.load(f)

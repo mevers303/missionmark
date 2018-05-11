@@ -12,7 +12,7 @@ import pickle
 
 def get_corpus():
 
-    if PICKLING_CORPUS:
+    if CORPUS_PICKLING:
         debug("Loading cached corpus...")
         with open("pickle/corpus.pkl", "rb") as f:
             corpus = pickle.load(f)
@@ -56,7 +56,7 @@ def get_corpus():
     debug(f" -> {len(corpus)} documents loaded!", 1)
 
 
-    if not PICKLING_CORPUS:
+    if not CORPUS_PICKLING:
         debug("Caching corpus...")
         with open("pickle/doc_ids.pkl", "wb") as f:
             pickle.dump(doc_ids, f)
