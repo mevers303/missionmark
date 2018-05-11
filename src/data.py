@@ -23,7 +23,7 @@ debug(" -> Connection successful!", 1)
 
 def get_corpus():
 
-    debug("Loading test corpus...")
+    debug("Loading corpus...")
 
     q = """
            SELECT id, text
@@ -39,7 +39,7 @@ def get_corpus():
 
     for row in cursor:
         doc_ids.append(row[0])
-        doc_ids.append(row[1])
+        corpus.append(row[1])
 
     debug(f" -> {len(corpus)} documents loaded!", 1)
     return list(doc_ids), list(corpus)
