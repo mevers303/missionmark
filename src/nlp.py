@@ -47,17 +47,6 @@ def stem(token):
     return token
 
 
-def load_pickle_corpus():
-
-    with open("pickle/corpus.pkl", "rb") as f:
-        corpus = pickle.load(f)
-
-    with open("pickle/ids.pkl", "rb") as f:
-        doc_ids = pickle.load(f)
-
-    return doc_ids, corpus
-
-
 def load_pickle_vectorizer():
 
     with open("pickle/tfidf.pkl", "rb") as f:
@@ -374,7 +363,7 @@ def main():
 # if __name__ == "__main__":
 
     DEBUG_LEVEL = 2
-    pickling = True
+    pickling = False
     n_topics = 100
 
     if pickling:

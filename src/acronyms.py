@@ -230,8 +230,9 @@ def parse_acronym(acronym, acronym_i, tokens):
 
     if not search_result:
         debug(f"WARNING -> Acronym does not match: {acronym}", 2)
-        debug(f" !!!!!! -> Could not find a good match, keeping original: {definition_tokens}", 3)
-        return " ".join(definition_tokens)
+        # debug(f" !!!!!! -> Could not find a good match, keeping original: {definition_tokens}", 3)
+        # return " ".join(definition_tokens)
+        return False
     else:
         debug(f"WARNING -> Acronym does not match: {acronym}", 3)
         debug(f"     OK -> Best match: {search_result}", 3)
