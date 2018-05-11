@@ -17,12 +17,11 @@ with open("/home/mark/missionmark_db_creds", "r") as f:
 
 debug("Connecting to Postgres database...")
 conn = psycopg2.connect(host=host, dbname=dbname, user=user, password=password)
-cursor = conn.cursor()
 debug(" -> Connection successful!", 1)
 
 
 
-def get_test_data():
+def get_corpus():
 
     debug("Loading test corpus...")
 
@@ -32,31 +31,20 @@ def get_test_data():
            LIMIT 10000
         """
 
+    cursor = conn.cursor()
     cursor.execute(q)
-    ids, corpus = zip(*cursor)
+
+    doc_ids = []
+    corpus = []
+
+    for row in cursor:
+        doc_ids.append(row[0])
+        doc_ids.append(row[1])
 
     debug(f" -> {len(corpus)} documents loaded!", 1)
-    return corpus
-
-
-
-def get_all_data():
-
-    debug("Loading corpus...")
-
-    q = """
-           SELECT id, text
-           FROM import.fbo_files
-           LIMIT 10000
-        """
-
-    cursor.execute(q)
-    ids, corpus = zip(*cursor)
-    debug(f" -> {len(corpus)} documents loaded!", 1)
-
-    return ids, corpus
+    return list(doc_ids), list(corpus)
 
 
 if __name__ == "__main__":
 
-    ids, corpus = get_all_data()
+    ids, corpus = get_corpus()

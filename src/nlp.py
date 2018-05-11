@@ -53,9 +53,9 @@ def load_pickle_corpus():
         corpus = pickle.load(f)
 
     with open("ids.pkl", "rb") as f:
-        ids = pickle.load(f)
+        doc_ids = pickle.load(f)
 
-    return corpus, ids
+    return doc_ids, corpus
 
 
 def load_pickle_vectorizer():
@@ -353,13 +353,13 @@ def main():
     DEBUG_LEVEL = 2
     n_topics = 100
 
-    # corpus, ids = load_pickle_corpus()
-    corpus, ids = get_test_data()
+    # doc_ids, corpus = load_pickle_corpus()
+    doc_ids, corpus = get_corpus()
 
     # vectorizer, corpus_tfidf = load_pickle_vectorizer()
     vectorizer, corpus_tfidf = vectorize(corpus)
     word_list = np.array(vectorizer.get_feature_names())
-    pickle_save(corpus, ids, vectorizer, corpus_tfidf)
+    pickle_save(corpus, doc_ids, vectorizer, corpus_tfidf)
 
     if DEBUG_LEVEL > 1:
         dump_features(word_list)
