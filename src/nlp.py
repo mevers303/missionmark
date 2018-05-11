@@ -217,7 +217,7 @@ def sumarize_corpus(corpus, vectorizer, n_sentences=10):
     for doc in corpus:
         summaries.append(summarize_doc(doc, vectorizer, n_sentences))
         completed += 1
-        progress_bar(completed, n_docs)
+        progress_bar(completed, n_docs, 1)
 
     debug(f" -> {len(summaries)} documents summarized!", 1)
     return summaries
@@ -309,13 +309,17 @@ def build_word_clouds(corpus_tfidf, corpus_topics, word_list, n_topics):
     completed = 0
     progress_bar(completed, n_topics)
 
-    topic_tfidf_weights = get_tfidf_topic_words(corpus_tfidf, corpus_topics, n_topics)
+    topic_tfidf_weights = get_tfidf_topic_weights(corpus_tfidf, corpus_topics, n_topics)
+    topic_top_words_i = np.argsort(topic_tfidf_weights, axis=1)[::-1]
 
     for topic_i in range(n_topics):
-        topic_top_words_i = np.argsort(topic_tfidf_weights)[::-1]
 
-        wc = WordCloud(background_color="black", max_words=2000, width=2000, height=1000)
-        wc.fit_words({word_list[word_i]: topic_tfidf_weights[word_i] for word_i in topic_top_words_i if topic_tfidf_weights[word_i]})
+        # an empty topic...
+        if not topic_tfidf_weights[topic_i].sum():
+            continue
+
+        wc = WordCloud(background_color="black", max_words=5000, width=2000, height=1000)
+        wc.fit_words({word_list[word_i]: topic_tfidf_weights[topic_i, word_i] for word_i in topic_top_words_i[topic_i] if topic_tfidf_weights[topic_i, word_i]})
         wc.to_file(os.path.join("output/" + str(topic_i).rjust(2, "0"), "wordcloud.png"))
 
         # plt.imshow(wc)
@@ -333,7 +337,7 @@ def vectorize(corpus):
 
     debug("Vectorizing keywords...")
 
-    vectorizer = TfidfVectorizer(stop_words=get_stopwords(), tokenizer=tfidf_tokenize, max_df=.9, min_df=2, ngram_range=(1,1))
+    vectorizer = TfidfVectorizer(stop_words=get_stopwords(), tokenizer=tfidf_tokenize, max_df=.66, min_df=2, ngram_range=(1,1), sublinear_tf=True)
     corpus_tfidf = vectorizer.fit_transform(corpus)
 
     debug(f" -> {corpus_tfidf.shape[1]} tokens found!", 1)
@@ -370,7 +374,7 @@ def main():
 # if __name__ == "__main__":
 
     DEBUG_LEVEL = 2
-    pickling = False
+    pickling = True
     n_topics = 100
 
     if pickling:
@@ -397,16 +401,16 @@ def main():
     if not pickling:
         pickle_save(corpus, doc_ids, vectorizer, corpus_tfidf, model, W)
 
-    summaries = sumarize_corpus(corpus, vectorizer)
-    dump_topic_corpus(corpus_topics, summaries, doc_ids)
-    del summaries  # save some RAM for the wordclouds
+    # summaries = sumarize_corpus(corpus, vectorizer)
+    # dump_topic_corpus(corpus_topics, summaries, doc_ids)
+    # del summaries  # save some RAM for the wordclouds
 
     build_word_clouds(corpus_tfidf, corpus_topics, word_list, n_topics)
 
 
-    # if DEBUG_LEVEL > 1:
-    #     print_top_topic_words(H, word_list)
-    #     get_tfidf_topic_words(corpus_tfidf, corpus_topics, word_list, n_topics)
+    if DEBUG_LEVEL > 1:
+         print_top_topic_words(H, word_list, 50)
+         debug(get_tfidf_topic_words(corpus_tfidf, corpus_topics, word_list, n_topics, 15), 2)
 
     debug("Done!")
 
