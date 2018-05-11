@@ -27,13 +27,13 @@ def get_test_data():
     debug("Loading test corpus...")
 
     q = """
-           select text
-           from import.fbo_files
-           where ts_text_simple @@ to_tsquery('agile <-> software <-> development')
+           SELECT id, text
+           FROM import.fbo_files
+           LIMIT 100000
         """
 
     cursor.execute(q)
-    corpus = [row[0] for row in cursor]
+    ids, corpus = zip(*cursor)
 
     debug(f" -> {len(corpus)} documents loaded!", 1)
     return corpus
@@ -45,21 +45,13 @@ def get_all_data():
     debug("Loading corpus...")
 
     q = """
-           select id, text
-           from import.fbo_files
+           SELECT id, text
+           FROM import.fbo_files
+           LIMIT 200000
         """
 
     cursor.execute(q)
-
     ids, corpus = zip(*cursor)
-
-    # ids = []
-    # docs = []
-    #
-    # for row in cursor:
-    #     ids.append(row[0])
-    #     docs.append(row[1])
-
     debug(f" -> {len(corpus)} documents loaded!", 1)
 
     return ids, corpus

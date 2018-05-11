@@ -7,7 +7,7 @@
 from sklearn.decomposition import NMF
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
-# from src.data import *
+from src.data import *
 from src.globals import *
 
 import matplotlib.pyplot as plt
@@ -52,7 +52,10 @@ def load_pickle_corpus():
     with open("corpus.pkl", "rb") as f:
         corpus = pickle.load(f)
 
-    return corpus
+    with open("ids.pkl", "rb") as f:
+        ids = pickle.load(f)
+
+    return corpus, ids
 
 
 def load_pickle_vectorizer():
@@ -237,18 +240,43 @@ def dump_topic_corpus(corpus_topics, corpus):
             f.write(corpus[i])
 
 
-def get_tfidf_topic_words(corpus_tfidf, corpus_topics, word_list, n_topics, n_words=10):
+def get_tfidf_topic_weights(corpus_tfidf, corpus_topics, n_topics):
 
-    topic_tfidf_words = []
+    topic_tfidf_weights = []
 
     for topic_i in range(n_topics):
+
         topic_corpus = corpus_tfidf[corpus_topics == topic_i]
+
         topic_word_scores = topic_corpus.sum(axis=0).A1
-        topic_top_words_i = np.argsort(topic_word_scores)[::-1]
+        topic_tfidf_weights.append(topic_word_scores)
+
+    return np.array(topic_tfidf_weights)
+
+
+
+def get_tfidf_topic_words(corpus_tfidf, corpus_topics, word_list, n_topics, n_words=10):
+
+    topic_tfidf_weights = get_tfidf_topic_words(corpus_tfidf, corpus_topics, n_topics)
+    top_words = []
+
+    for topic_i in range(n_topics):
+
+        topic_top_words_i = np.argsort(topic_tfidf_weights)[::-1]
+
         topic_words = word_list[topic_top_words_i[:n_words]]
-        topic_tfidf_words.append(topic_words)
+        top_words.append(topic_words)
+
         debug(f"TF-IDF words for topic {topic_i}:")
         debug(str(topic_words))
+
+    return top_words
+
+
+
+def build_word_clouds():
+
+    
 
         wc = WordCloud(background_color="black", max_words=2000, width=2000, height=1000)
         wc.fit_words({word_list[word_i]: topic_word_scores[word_i] for word_i in topic_top_words_i if topic_word_scores[word_i]})
@@ -269,10 +297,10 @@ def get_tfidf_topic_words(corpus_tfidf, corpus_topics, word_list, n_topics, n_wo
 if __name__ == "__main__":
 
     DEBUG_LEVEL = 2
-    n_topics = 25
+    n_topics = 100
 
-    corpus = load_pickle_corpus()
-    # corpus = get_test_data()
+    # corpus, ids = load_pickle_corpus()
+    corpus, ids = get_test_data()
 
     # vectorizer, corpus_tfidf = load_pickle_vectorizer()
     debug("Vectorizing keywords...")
@@ -285,7 +313,7 @@ if __name__ == "__main__":
         with open("features.txt", "w") as f:
             for word in word_list:
                 f.write(word + "\n")
-    pickle_save(corpus, vectorizer, corpus_tfidf)
+    pickle_save(corpus, ids, vectorizer, corpus_tfidf)
     exit(0)
 
     debug(f"Sorting into {n_topics} topics...")
@@ -304,12 +332,8 @@ if __name__ == "__main__":
     debug(f" -> {len(summaries)} files created!", 1)
 
     if DEBUG_LEVEL > 1:
-        print_top_topic_words(H, word_list)
+        # print_top_topic_words(H, word_list)
         get_tfidf_topic_words(corpus_tfidf, corpus_topics, word_list, n_topics)
-
-        with open("features.txt", "w") as f:
-            for word in vectorizer.get_feature_names():
-                f.write(word + "\n")
 
     debug("Done!")
 
