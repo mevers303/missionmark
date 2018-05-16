@@ -232,7 +232,7 @@ def get_tfidf_topic_weights(corpus_tfidf, corpus_topics, n_topics):
 
 
 
-def get_tfidf_topic_words(corpus_tfidf, corpus_topics, word_list, n_topics, n_words=10):
+def print_tfidf_topic_words(corpus_tfidf, corpus_topics, word_list, n_topics, n_words=10):
 
     topic_tfidf_weights = get_tfidf_topic_weights(corpus_tfidf, corpus_topics, n_topics)
     topic_top_words_i = np.argsort(topic_tfidf_weights, axis=1)[:, ::-1]
@@ -243,8 +243,8 @@ def get_tfidf_topic_words(corpus_tfidf, corpus_topics, word_list, n_topics, n_wo
         topic_words = word_list[topic_top_words_i[topic_i, :n_words]]
         top_words.append(topic_words)
 
-        debug(f"TF-IDF words for topic {topic_i}:")
-        debug(str(topic_words))
+        debug(f"TF-IDF words for topic {topic_i}:", 2)
+        debug(str(topic_words), 2)
 
     return top_words
 
@@ -365,7 +365,7 @@ def main():
 
     DEBUG_LEVEL = 2
     n_topics = 100
-    do_summaries = False
+    do_summaries = True
 
     doc_ids, corpus = get_corpus()
 
@@ -386,7 +386,7 @@ def main():
 
     if DEBUG_LEVEL > 1:
          print_top_topic_words(H, word_list, 50)
-         print(get_tfidf_topic_words(corpus_tfidf, corpus_topics, word_list, n_topics, 15))
+         print_tfidf_topic_words(corpus_tfidf, corpus_topics, word_list, n_topics, 15)
 
     build_word_clouds(corpus_tfidf, corpus_topics, H, word_list, n_topics)
 
