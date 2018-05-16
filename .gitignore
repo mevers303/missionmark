@@ -3,3 +3,4 @@ output/
 *.pkl
 features.txt
 pickle/
+data/docs

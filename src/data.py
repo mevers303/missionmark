@@ -122,6 +122,16 @@ def get_corpus():
 
 
 
+def get_cached_corpus_filenames():
+    return ["data/docs/" + file for file in os.listdir("data/docs/") if file.endswith(".txt")]
+
+
+def get_cached_corpus_doc_ids():
+    return [file[-4] for file in os.listdir("data/docs/") if file.endswith(".txt")]
+
+
+
+
 if __name__ == "__main__":
 
     cache_corpus()
