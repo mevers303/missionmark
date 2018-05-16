@@ -9,6 +9,8 @@ from src.globals import *
 import pickle
 import os
 
+import sys
+sys.path.append(os.getcwd())
 
 
 def cache_corpus():
