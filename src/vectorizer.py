@@ -78,7 +78,7 @@ def count_vectorize(corpus, input="content"):
     else:
         debug("Vectorizing documents...")
 
-        count_vectorizer = TfidfVectorizer(input=input, stop_words=get_stopwords(), tokenizer=tokenize, max_df=.66, min_df=2, ngram_range=(1,1), sublinear_tf=True, strip_accents="ascii", dtype=np.uint16)
+        count_vectorizer = CountVectorizer(input=input, stop_words=get_stopwords(), tokenizer=tokenize, ngram_range=(1,1), strip_accents="ascii", dtype=np.uint16)
         count_vectorizer_corpus = count_vectorizer.fit_transform(corpus)
 
         debug("Caching vectorizer...")
@@ -88,7 +88,7 @@ def count_vectorize(corpus, input="content"):
             pickle.dump(count_vectorizer_corpus, f)
         debug(" -> Vectorizer cached!", 1)
 
-    debug(f" -> {count_vectorizer.shape[1]} tokens found!", 1)
+    debug(f" -> {count_vectorizer_corpus.shape[1]} tokens found!", 1)
     return count_vectorizer, count_vectorizer_corpus
 
 
@@ -96,14 +96,9 @@ def count_vectorize_cache():
 
     global n_docs
 
-    debug("Searching for cached documents...")
-    corpus_filenames = get_cached_corpus_filenames()
-    n_docs = len(corpus_filenames)
-    debug(f" -> {n_docs} cached documents found!", 1)
+    corpus_filenames, n_docs = get_cached_corpus_filenames()
 
-    debug("Vectorizing documents...")
     count_vectorizer, count_vectorizer_corpus = count_vectorize(corpus_filenames, input="filename")
-    debug(f" -> {n_docs} documents vectorized!", 1)
 
     return count_vectorizer, count_vectorizer_corpus
 

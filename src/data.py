@@ -25,38 +25,42 @@ def cache_corpus():
     debug(" -> Connection successful!", 1)
 
 
-    debug("Loading corpus...")
-    cursor = conn.cursor()
-
     corpus_cached_ids = get_cached_corpus_doc_ids()
     n_cached = len(corpus_cached_ids)
     debug(f" -> {n_cached} already cached...", 1)
 
-    q = f"""
-           SELECT COUNT(*)
-           FROM import.fbo_files
-           WHERE id NOT IN ('{"', '".join(corpus_cached_ids)}')
-        """
 
-    cursor.execute(q)
-    n_docs = cursor.fetchone()[0]
+    debug("Loading corpus...")
+    with conn.cursor() as cursor:
+
+        q = f"""
+               SELECT COUNT(*)
+               FROM import.fbo_files
+               WHERE text IS NOT NULL
+                 AND text != ''
+                 AND id NOT IN ('{"', '".join(corpus_cached_ids)}')
+            """
+
+        cursor.execute(q)
+        del q  # so pycharm doesn't crash
+        n_docs = cursor.fetchone()[0]
 
 
     debug(f" -> Downloading {n_docs}...", 1)
     completed = 0
-
-    for i in range(0, n_docs, DOC_BUFFER_SIZE):
+    with conn.cursor(name="doc_getter") as cursor:
+        cursor.itersize = 1000
 
         q = f"""
                 SELECT id, text
                 FROM import.fbo_files
                 WHERE text IS NOT NULL
                   AND text != ''
-                  AND id NOT IN ({", ".join(corpus_cached_ids)})
-                LIMIT {DOC_BUFFER_SIZE} OFFSET {i}
+                  AND id NOT IN ('{"', '".join(corpus_cached_ids)}')
              """
 
         cursor.execute(q)
+        del q  # so pycharm doesn't crash
 
         for id, doc in cursor:
 
@@ -66,7 +70,7 @@ def cache_corpus():
                 progress_bar(completed, n_docs, 1)
 
 
-    debug(f" -> {n_docs} documents cached!", 1)
+        debug(f" -> {n_docs} documents cached!", 1)
 
 
 
@@ -130,7 +134,13 @@ def get_corpus():
 
 
 def get_cached_corpus_filenames():
-    return ["data/docs/" + file for file in os.listdir("data/docs/") if file.endswith(".txt")]
+    debug("Searching for cached documents...")
+    cached_filenames = ["data/docs/" + file for file in os.listdir("data/docs/") if file.endswith(".txt")]
+    n_docs = len(cached_filenames)
+    debug(f" -> {n_docs} cached documents found!", 1)
+
+    return cached_filenames, n_docs
+
 
 
 def get_cached_corpus_doc_ids():
