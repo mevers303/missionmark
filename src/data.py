@@ -28,17 +28,23 @@ def cache_corpus():
     debug("Loading corpus...")
     cursor = conn.cursor()
 
-    q = """
+    corpus_cached_ids = get_cached_corpus_doc_ids()
+    n_cached = len(corpus_cached_ids)
+    debug(f" -> {n_cached} already cached...", 1)
+
+    q = f"""
            SELECT COUNT(*)
            FROM import.fbo_files
+           WHERE id NOT IN ('{"', '".join(corpus_cached_ids)}')
         """
 
     cursor.execute(q)
     n_docs = cursor.fetchone()[0]
-    debug(f"Found {n_docs}!")
 
 
+    debug(f" -> Downloading {n_docs}...", 1)
     completed = 0
+
     for i in range(0, n_docs, DOC_BUFFER_SIZE):
 
         q = f"""
@@ -46,6 +52,7 @@ def cache_corpus():
                 FROM import.fbo_files
                 WHERE text IS NOT NULL
                   AND text != ''
+                  AND id NOT IN ({", ".join(corpus_cached_ids)})
                 LIMIT {DOC_BUFFER_SIZE} OFFSET {i}
              """
 
@@ -59,7 +66,7 @@ def cache_corpus():
                 progress_bar(completed, n_docs, 1)
 
 
-    debug(f" -> {len(corpus)} documents loaded!", 1)
+    debug(f" -> {n_docs} documents cached!", 1)
 
 
 
@@ -127,7 +134,7 @@ def get_cached_corpus_filenames():
 
 
 def get_cached_corpus_doc_ids():
-    return [file[-4] for file in os.listdir("data/docs/") if file.endswith(".txt")]
+    return [file[:-4] for file in os.listdir("data/docs/") if file.endswith(".txt")]
 
 
 
