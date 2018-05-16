@@ -38,12 +38,10 @@ def cache_corpus():
                FROM import.fbo_files
                WHERE text IS NOT NULL
                  AND text != ''
-                 AND id NOT IN ('{"', '".join(corpus_cached_ids)}')
             """
 
         cursor.execute(q)
-        del q  # so pycharm doesn't crash
-        n_docs = cursor.fetchone()[0]
+        n_docs = cursor.fetchone()[0] - n_cached
 
 
     debug(f" -> Downloading {n_docs}...", 1)
