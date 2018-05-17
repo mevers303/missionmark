@@ -155,4 +155,4 @@ def get_cached_corpus_doc_ids(table_name):
 
 if __name__ == "__main__":
 
-    cache_corpus("govwin_opportunity")
+    cache_corpus("govwin_opportunity", "opportunity_id", "program_description")
