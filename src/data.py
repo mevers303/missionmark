@@ -60,7 +60,7 @@ def cache_corpus(table_name, id_column, text_column):
             """
 
         cursor.execute(q)
-        n_docs = cursor.fetchone()[0] - n_cached
+        n_docs = cursor.fetchone()[0]
 
 
     debug(f" -> Downloading {n_docs}...", 1)
