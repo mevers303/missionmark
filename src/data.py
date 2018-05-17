@@ -59,7 +59,6 @@ def cache_corpus(table_name, id_column, text_column):
                 FROM import.{table_name}
                 WHERE {text_column} IS NOT NULL
                   AND {text_column} != ''
-                  AND {id_column} NOT IN ('{"', '".join(corpus_cached_ids)}')
              """
 
         cursor.execute(q)
