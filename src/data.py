@@ -70,7 +70,7 @@ def cache_corpus(table_name, id_column, text_column):
                 with open(f"data/{table_name}/docs/{id}.txt", "w") as f:
                     f.write(doc)
                     progress_bar(completed, n_docs, 1)
-                completed += 1
+            completed += 1
 
 
         debug(f" -> {n_docs} documents cached!", 1)
