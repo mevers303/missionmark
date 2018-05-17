@@ -2,6 +2,7 @@
 # https://stackoverflow.com/a/43419027
 
 import pickle
+from src.globals import debug
 
 
 class BigFile(object):
@@ -28,21 +29,27 @@ class BigFile(object):
 
     def write(self, buffer):
         n = len(buffer)
-        print("writing total_bytes=%s..." % n, flush=True)
+        debug(f" -> Writing {n} total bytes...", 2)
         idx = 0
         while idx < n:
             batch_size = min(n - idx, 1 << 31 - 1)
-            print("writing bytes [%s, %s)... " % (idx, idx + batch_size), end="", flush=True)
+            debug(f" ---> Writing bytes [{idx}, {idx + batch_size})... ", 2)
             self.f.write(buffer[idx:idx + batch_size])
-            print("done.", flush=True)
+            debug(f" ---> Done", 2)
             idx += batch_size
 
 
 def pickle_dump(obj, file_path):
+    debug(f"Caching {file_path}...")
     with open(file_path, "wb") as f:
-        return pickle.dump(obj, BigFile(f), protocol=pickle.HIGHEST_PROTOCOL)
+        result = pickle.dump(obj, BigFile(f), protocol=pickle.HIGHEST_PROTOCOL)
+    debug(f" -> {file_path} saved!", 1)
+    return result
 
 
 def pickle_load(file_path):
+    debug(f"Loading {file_path} from cache...")
     with open(file_path, "rb") as f:
-        return pickle.load(BigFile(f))
+        obj = pickle.load(BigFile(f))
+    debug(f" -> {file_path} loaded!", 1)
+    return obj

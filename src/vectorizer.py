@@ -65,7 +65,6 @@ def count_vectorize(doc_ids, corpus, table_name, input="content"):
     count_vectorizer_corpus = None
 
     if MODEL_PICKLING and os.path.exists(f"data/{table_name}/pickles/CountVectorizer.pkl"):
-        debug("Loading cached vectorizer...")
         count_vectorizer = pickle_load(f"data/{table_name}/pickles/CountVectorizer.pkl")
 
     else:
@@ -74,15 +73,12 @@ def count_vectorize(doc_ids, corpus, table_name, input="content"):
         count_vectorizer_corpus = count_vectorizer.fit_transform(corpus)
         debug(" -> Done!", 1)
 
-        debug("Caching vectorizer...")
         pickle_dump(count_vectorizer, f"data/{table_name}/pickles/CountVectorizer.pkl")
-        debug(" -> Vectorizer cached!", 1)
 
     debug(f" -> Loaded vectorizer with {len(count_vectorizer.get_feature_names())} features!", 1)
 
 
-    if not count_vectorizer_corpus and CORPUS_PICKLING and os.path.exists(f"data/{table_name}/pickles/CountVectorizer_corpus.pkl"):
-        debug("Loading cached count vector...")
+    if count_vectorizer_corpus is None and CORPUS_PICKLING and os.path.exists(f"data/{table_name}/pickles/CountVectorizer_corpus.pkl"):
         count_vectorizer_corpus = pickle_load(f"data/{table_name}/pickles/CountVectorizer_corpus.pkl")
         with open(f"data/{table_name}/pickles/CountVectorizer_doc_ids.txt", "r") as f:
             doc_ids = [line[:-1] for line in f]
@@ -91,14 +87,12 @@ def count_vectorize(doc_ids, corpus, table_name, input="content"):
         count_vectorizer_corpus = count_vectorizer.transform(corpus)
         debug(" -> Done!", 1)
 
-        debug("Caching corpus count vector...")
         pickle_dump(count_vectorizer_corpus, f"data/{table_name}/pickles/CountVectorizer_corpus.pkl")
         with open(f"data/{table_name}/pickles/CountVectorizer_doc_ids.txt", "w") as f:
             for doc_id in doc_ids:
                 f.write(doc_id + "\n")
-        debug(" -> Corpus vector cached!", 1)
 
-    debug(f" -> {count_vectorizer_corpus.shape[0]} tokens found!", 1)
+    debug(f" -> Loaded {count_vectorizer_corpus.shape[0]} documents with {count_vectorizer_corpus.shape[1]} features!", 1)
 
 
     return count_vectorizer, doc_ids, count_vectorizer_corpus
@@ -108,7 +102,7 @@ def count_vectorize_cache():
 
     global n_docs
 
-    corpus_filenames, n_docs = get_cached_corpus_filenames("govwin_opportunity")
+    corpus_filenames, n_docs = get_cached_corpus_filenames("fbo_files")
     doc_ids = [file[:-4] for file in corpus_filenames]
 
     count_vectorizer, doc_ids, count_vectorizer_corpus = count_vectorize(doc_ids, corpus_filenames, "fbo_files", input="filename")
