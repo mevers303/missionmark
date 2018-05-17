@@ -14,6 +14,9 @@ import psycopg2
 from src.globals import *
 import pickle
 
+from bs4 import BeautifulSoup
+from bs4.element import Comment
+
 
 
 _connection = None
@@ -40,16 +43,16 @@ def get_connection():
 
 
 
-def cache_corpus(table_name, id_column, text_column):
+def cache_corpus(table_name, id_column, text_column, remove_html=False):
 
     conn = get_connection()
+    debug("Loading corpus...")
 
     corpus_cached_ids = get_cached_corpus_doc_ids(table_name)
     n_cached = len(corpus_cached_ids)
     debug(f" -> {n_cached} already cached...", 1)
 
 
-    debug("Loading corpus...")
     with conn.cursor() as cursor:
 
         q = f"""
@@ -78,10 +81,12 @@ def cache_corpus(table_name, id_column, text_column):
         cursor.execute(q)
         del q  # so pycharm doesn't crash
 
-        for id, doc in cursor:
+        for doc_id, doc in cursor:
 
-            if not os.path.exists(f"data/{table_name}/docs/{id}.txt"):
-                with open(f"data/{table_name}/docs/{id}.txt", "w") as f:
+            if not os.path.exists(f"data/{table_name}/docs/{doc_id}.txt"):
+                with open(f"data/{table_name}/docs/{doc_id}.txt", "w") as f:
+                    if remove_html:
+                        doc = strip_html(doc)
                     f.write(doc)
 
             completed += 1
@@ -158,6 +163,24 @@ def get_cached_corpus_doc_ids(table_name):
 
 
 
+def tag_visible(element):
+    if element.parent.name in ['style', 'script', 'head', 'title', 'meta', '[document]']:
+        return False
+    if isinstance(element, Comment):
+        return False
+    return True
+
+
+def strip_html(doc):
+    soup = BeautifulSoup(doc, 'html.parser')
+    texts = soup.findAll(text=True)
+    visible_texts = filter(tag_visible, texts)
+    return " ".join(t.strip() for t in visible_texts)
+
+
+
+
+
 if __name__ == "__main__":
 
-    cache_corpus("govwin_opportunity", "opportunity_id", "program_description")
+    cache_corpus("govwin_opportunity", "opportunity_id", "program_description", remove_html=True)
