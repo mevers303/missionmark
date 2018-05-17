@@ -52,7 +52,7 @@ def cache_corpus(table_name, id_column, text_column):
     debug(f" -> Downloading {n_docs}...", 1)
     completed = 0
     with conn.cursor(name="doc_getter") as cursor:
-        cursor.itersize = 1000
+        cursor.itersize = DOC_BUFFER_SIZE
 
         q = f"""
                 SELECT {id_column}, {text_column}
@@ -69,8 +69,9 @@ def cache_corpus(table_name, id_column, text_column):
             if not os.path.exists(f"data/{table_name}/docs/{id}.txt"):
                 with open(f"data/{table_name}/docs/{id}.txt", "w") as f:
                     f.write(doc)
-                    progress_bar(completed, n_docs, 1)
+
             completed += 1
+            progress_bar(completed, n_docs, 1)
 
 
         debug(f" -> {n_docs} documents cached!", 1)
