@@ -16,19 +16,33 @@ import pickle
 
 
 
+_connection = None
+
+def get_connection():
+
+    global _connection
+
+    if not _connection:
+        debug("Connecting to Postgres database...")
+
+        with open("missionmark_db_creds", "r") as f:
+            host = f.readline()[:-1]
+            dbname = f.readline()[:-1]
+            user = f.readline()[:-1]
+            password = f.readline()[:-1]
+
+        _connection = psycopg2.connect(host=host, dbname=dbname, user=user, password=password)
+        debug(" -> Connection successful!", 1)
+
+    return _connection
+
+
+
+
+
 def cache_corpus(table_name, id_column, text_column):
 
-    debug("Connecting to Postgres database...")
-
-    with open("missionmark_db_creds", "r") as f:
-        host = f.readline()[:-1]
-        dbname = f.readline()[:-1]
-        user = f.readline()[:-1]
-        password = f.readline()[:-1]
-
-    conn = psycopg2.connect(host=host, dbname=dbname, user=user, password=password)
-    debug(" -> Connection successful!", 1)
-
+    conn = get_connection()
 
     corpus_cached_ids = get_cached_corpus_doc_ids(table_name)
     n_cached = len(corpus_cached_ids)
@@ -89,17 +103,8 @@ def get_corpus():
             doc_ids = pickle.load(f)
 
     else:
+        conn = get_connection()
         debug("Loading corpus...")
-        with open("/home/mark/missionmark_db_creds", "r") as f:
-            host = f.readline()[:-1]
-            dbname = f.readline()[:-1]
-            user = f.readline()[:-1]
-            password = f.readline()[:-1]
-
-        debug("Connecting to Postgres database...")
-        conn = psycopg2.connect(host=host, dbname=dbname, user=user, password=password)
-        debug(" -> Connection successful!", 1)
-
 
         q = """
                SELECT id, text
