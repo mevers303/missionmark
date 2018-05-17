@@ -3,4 +3,6 @@ output/
 *.pkl
 features.txt
 pickle/
-data/docs
+data/
+missionmark_db_creds
+*__pycache__*

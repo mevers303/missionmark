@@ -20,7 +20,7 @@ def cache_corpus(table_name, id_column, text_column):
 
     debug("Connecting to Postgres database...")
 
-    with open("/home/mark/missionmark_db_creds", "r") as f:
+    with open("missionmark_db_creds", "r") as f:
         host = f.readline()[:-1]
         dbname = f.readline()[:-1]
         user = f.readline()[:-1]
