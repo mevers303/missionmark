@@ -4,16 +4,19 @@
 # Script for getting data
 
 
+import os
+import sys
+sys.path.append(os.getcwd())
+sys.path.append("src")
+
+
 import psycopg2
 from src.globals import *
 import pickle
-import os
-
-import sys
-sys.path.append(os.path.join(os.getcwd(), "src"))
 
 
-def cache_corpus():
+
+def cache_corpus(table_name, id_column, text_column):
 
     debug("Connecting to Postgres database...")
 
@@ -27,7 +30,7 @@ def cache_corpus():
     debug(" -> Connection successful!", 1)
 
 
-    corpus_cached_ids = get_cached_corpus_doc_ids()
+    corpus_cached_ids = get_cached_corpus_doc_ids(table_name)
     n_cached = len(corpus_cached_ids)
     debug(f" -> {n_cached} already cached...", 1)
 
@@ -37,9 +40,9 @@ def cache_corpus():
 
         q = f"""
                SELECT COUNT(*)
-               FROM import.fbo_files
-               WHERE text IS NOT NULL
-                 AND text != ''
+               FROM import.{table_name}
+               WHERE {text_column} IS NOT NULL
+                 AND {text_column} != ''
             """
 
         cursor.execute(q)
@@ -52,11 +55,11 @@ def cache_corpus():
         cursor.itersize = 1000
 
         q = f"""
-                SELECT id, text
-                FROM import.fbo_files
-                WHERE text IS NOT NULL
-                  AND text != ''
-                  AND id NOT IN ('{"', '".join(corpus_cached_ids)}')
+                SELECT {id_column}, {text_column}
+                FROM import.{table_name}
+                WHERE {text_column} IS NOT NULL
+                  AND {text_column} != ''
+                  AND {id_column} NOT IN ('{"', '".join(corpus_cached_ids)}')
              """
 
         cursor.execute(q)
@@ -64,10 +67,11 @@ def cache_corpus():
 
         for id, doc in cursor:
 
-            with open(os.path.join("data/docs", f"{id}.txt"), "w") as f:
-                f.write(doc)
+            if not os.path.exists(f"data/{table_name}/docs/{id}.txt"):
+                with open(f"data/{table_name}/docs/{id}.txt", "w") as f:
+                    f.write(doc)
+                    progress_bar(completed, n_docs, 1)
                 completed += 1
-                progress_bar(completed, n_docs, 1)
 
 
         debug(f" -> {n_docs} documents cached!", 1)
@@ -133,9 +137,9 @@ def get_corpus():
 
 
 
-def get_cached_corpus_filenames():
+def get_cached_corpus_filenames(table_name):
     debug("Searching for cached documents...")
-    cached_filenames = ["data/docs/" + file for file in os.listdir("data/docs/") if file.endswith(".txt")]
+    cached_filenames = [f"data/{table_name}/docs/" + file for file in os.listdir(f"data/{table_name}/docs/") if file.endswith(".txt")]
     n_docs = len(cached_filenames)
     debug(f" -> {n_docs} cached documents found!", 1)
 
@@ -143,12 +147,12 @@ def get_cached_corpus_filenames():
 
 
 
-def get_cached_corpus_doc_ids():
-    return [file[:-4] for file in os.listdir("data/docs/") if file.endswith(".txt")]
+def get_cached_corpus_doc_ids(table_name):
+    return [file[:-4] for file in os.listdir(f"data/{table_name}/docs/") if file.endswith(".txt")]
 
 
 
 
 if __name__ == "__main__":
 
-    cache_corpus()
+    cache_corpus("govwin_opportunity")
