@@ -30,6 +30,8 @@ docs_completed = 0
 
 
 
+
+
 def get_stopwords():
     """
     Reads the stopwords from stopwords.txt and combines them with the ENGLISH_STOP_WORDS in sklearn.
@@ -74,6 +76,7 @@ def count_vectorize(doc_ids, corpus, table_name, input="content"):
         debug(" -> Done!", 1)
 
         pickle_dump(count_vectorizer, f"data/{table_name}/pickles/CountVectorizer.pkl")
+        pickle_dump(count_vectorizer_corpus, f"data/{table_name}/pickles/CountVectorizer_corpus.pkl")
 
     debug(f" -> Loaded vectorizer with {len(count_vectorizer.get_feature_names())} features!", 1)
 
