@@ -174,19 +174,19 @@ class CountVectorizerProgressBar(CountVectorizer):
     def progress_bar(self):
 
         # percentage done
-        i = int(self._completed_docs / self._n_docs * 100)
+        percentage = int(self._completed_docs / self._n_docs * 100)
 
         stdout.write('\r')
         # print the progress bar
-        stdout.write("[{}]{}%".format(("-" * int(i / 2) + (">" if i < 100 else "")).ljust(50), str(i).rjust(4)))
+        stdout.write("[{}]{}%".format(("-" * int(percentage / 2) + (">" if percentage < 100 else "")).ljust(50), str(percentage).rjust(4)))
         # print the text figures
         stdout.write(" ({}/{})".format(self._completed_docs, self._n_docs).rjust(15))
         stdout.flush()
 
-        if i == 100:
+        if percentage == 100:
             # print("\n")
             stdout.write('\r')
             stdout.write(' ' * 80)
             stdout.write('\r')
 
-        self._PROGRESS_BAR_LAST_I = i
+        self._PROGRESS_BAR_LAST_I = percentage
