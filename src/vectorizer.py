@@ -95,10 +95,10 @@ def count_vectorize_cache():
 
     global n_docs
 
-    corpus_filenames, n_docs = get_cached_corpus_filenames("govwin_opportunity")
+    corpus_filenames, n_docs = get_cached_corpus_filenames("fbo_files")
     doc_ids = [file[:-4] for file in corpus_filenames]
 
-    count_vectorizer, doc_ids, count_vectorizer_corpus = count_vectorize(doc_ids, corpus_filenames, "govwin_opportunity", input="filename")
+    count_vectorizer, doc_ids, count_vectorizer_corpus = count_vectorize(doc_ids, corpus_filenames, "fbo_files", input="filename")
 
     return count_vectorizer, count_vectorizer_corpus
 
