@@ -48,7 +48,7 @@ def cache_corpus(table_name, id_column, text_column, remove_html=False):
     conn = get_connection()
     debug("Loading corpus...")
 
-    corpus_cached_ids = get_cached_corpus_doc_ids(table_name)
+    corpus_cached_ids = get_cached_doc_ids(table_name)
     n_cached = len(corpus_cached_ids)
     debug(f" -> {n_cached} already cached...", 1)
 
@@ -60,6 +60,8 @@ def cache_corpus(table_name, id_column, text_column, remove_html=False):
                FROM import.{table_name}
                WHERE {text_column} IS NOT NULL
                  AND {text_column} != ''
+                 AND {id_column} IS NOT NULL
+                 AND {id_column} != ''
             """
 
         cursor.execute(q)
@@ -67,7 +69,6 @@ def cache_corpus(table_name, id_column, text_column, remove_html=False):
 
 
     debug(f" -> Downloading {n_docs}...", 1)
-    completed = 0
     with conn.cursor(name="doc_getter") as cursor:
         cursor.itersize = DOC_BUFFER_SIZE
 
@@ -76,11 +77,13 @@ def cache_corpus(table_name, id_column, text_column, remove_html=False):
                 FROM import.{table_name}
                 WHERE {text_column} IS NOT NULL
                   AND {text_column} != ''
+                  AND {id_column} IS NOT NULL
+                  AND {id_column} != ''
              """
 
         cursor.execute(q)
-        del q  # so pycharm doesn't crash
 
+        completed = 0
         for doc_id, doc in cursor:
 
             if not os.path.exists(f"data/{table_name}/docs/{doc_id}.txt"):
@@ -97,57 +100,56 @@ def cache_corpus(table_name, id_column, text_column, remove_html=False):
 
 
 
-def get_corpus():
+def get_db_corpus(table_name, id_column, text_column, remove_html=False):
 
-    if CORPUS_PICKLING:
-        debug("Loading cached corpus...")
-        with open("pickle/corpus.pkl", "rb") as f:
-            corpus = pickle.load(f)
+    conn = get_connection()
+    debug("Loading corpus...")
 
-        with open("pickle/ids.pkl", "rb") as f:
-            doc_ids = pickle.load(f)
+    with conn.cursor() as cursor:
 
-    else:
-        conn = get_connection()
-        debug("Loading corpus...")
-
-        q = """
-               SELECT id, text
-               FROM import.fbo_files
-               WHERE text IS NOT NULL
-                 AND text != ''
-               LIMIT 10000
+        q = f"""
+               SELECT COUNT(*)
+               FROM import.{table_name}
+               WHERE {text_column} IS NOT NULL
+                 AND {text_column} != ''
+                 AND {id_column} IS NOT NULL
+                 AND {id_column} != ''
             """
 
-        cursor = conn.cursor()
         cursor.execute(q)
+        n_docs = cursor.fetchone()[0]
 
+
+    debug(f" -> Downloading {n_docs}...", 1)
+    with conn.cursor(name="doc_getter") as cursor:
+        cursor.itersize = DOC_BUFFER_SIZE
+
+        q = f"""
+                SELECT {id_column}, {text_column}
+                FROM import.{table_name}
+                WHERE {text_column} IS NOT NULL
+                  AND {text_column} != ''
+                  AND {id_column} IS NOT NULL
+                  AND {id_column} != ''
+             """
+
+        cursor.execute(q)
         doc_ids = []
         corpus = []
 
-        for row in cursor:
-            if row[0] and row[1]:
-                doc_ids.append(row[0])
-                corpus.append(row[1])
-
+        for doc_id, doc in cursor:
+            if remove_html:
+                doc = strip_html(doc)
+            doc_ids.append(doc_id)
+            corpus.append(doc)
 
     debug(f" -> {len(corpus)} documents loaded!", 1)
-
-
-    if not CORPUS_PICKLING:
-        debug("Caching corpus...")
-        with open("pickle/doc_ids.pkl", "wb") as f:
-            pickle.dump(doc_ids, f)
-        with open("pickle/corpus.pkl", "wb") as f:
-            pickle.dump(corpus, f)
-        debug(" -> Corpus cached!", 2)
-
 
     return doc_ids, corpus
 
 
 
-def get_cached_corpus_filenames(table_name):
+def get_cached_filenames(table_name):
     debug("Searching for cached documents...")
     cached_filenames = [f"data/{table_name}/docs/" + file for file in os.listdir(f"data/{table_name}/docs/") if file.endswith(".txt")]
     n_docs = len(cached_filenames)
@@ -157,13 +159,13 @@ def get_cached_corpus_filenames(table_name):
 
 
 
-def get_cached_corpus_doc_ids(table_name):
+def get_cached_doc_ids(table_name):
     return [file[:-4] for file in os.listdir(f"data/{table_name}/docs/") if file.endswith(".txt")]
 
 
 
 
-def tag_visible(element):
+def _tag_visible(element):
     if element.parent.name in ['style', 'script', 'head', 'title', 'meta', '[document]']:
         return False
     if isinstance(element, Comment):
@@ -174,7 +176,7 @@ def tag_visible(element):
 def strip_html(doc):
     soup = BeautifulSoup(doc, 'html.parser')
     texts = soup.findAll(text=True)
-    visible_texts = filter(tag_visible, texts)
+    visible_texts = filter(_tag_visible, texts)
     return " ".join(t.strip() for t in visible_texts)
 
 

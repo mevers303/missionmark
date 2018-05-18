@@ -1,5 +1,8 @@
-import numpy
+# Mark Evers
+# 5/18/18
+
 from sys import stdout
+import numpy
 from sklearn.feature_extraction.text import CountVectorizer
 
 
@@ -170,7 +173,6 @@ class CountVectorizerProgressBar(CountVectorizer):
         return super().transform(raw_documents)
 
 
-
     def progress_bar(self):
 
         # percentage done
@@ -188,5 +190,3 @@ class CountVectorizerProgressBar(CountVectorizer):
             stdout.write('\r')
             stdout.write(' ' * 80)
             stdout.write('\r')
-
-        self._PROGRESS_BAR_LAST_I = percentage

@@ -13,7 +13,7 @@ sys.path.append("src")
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from src.progress_bar_vetorizers import CountVectorizerProgressBar
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
-from src.data import get_cached_corpus_filenames
+from src.data import get_cached_filenames
 from src.globals import *
 
 from src.pickle_workaround import pickle_dump, pickle_load
@@ -91,17 +91,17 @@ def count_vectorize(doc_ids, corpus, table_name, input="content"):
     return count_vectorizer, doc_ids, count_vectorizer_corpus
 
 
-def count_vectorize_cache():
+def count_vectorize_cache(table_name):
 
     global n_docs
 
-    corpus_filenames, n_docs = get_cached_corpus_filenames("fbo_files")
+    corpus_filenames, n_docs = get_cached_filenames(table_name)
     doc_ids = [file[:-4] for file in corpus_filenames]
 
-    count_vectorizer, doc_ids, count_vectorizer_corpus = count_vectorize(doc_ids, corpus_filenames, "fbo_files", input="filename")
+    count_vectorizer, doc_ids, count_vectorizer_corpus = count_vectorize(doc_ids, corpus_filenames, table_name, input="filename")
 
     return count_vectorizer, count_vectorizer_corpus
 
 
 if __name__ == "__main__":
-    count_vectorize_cache()
+    count_vectorize_cache("fbo_files")
