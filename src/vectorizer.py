@@ -48,7 +48,7 @@ def tokenize(text):
     return [stemmer.stem(token) for token in re.split(r"[^a-zA-Z]+", text) if token]
 
 
-def count_vectorize(doc_ids, corpus, table_name, input="content"):
+def count_vectorize(doc_ids, corpus, table_name, input_type="content"):
 
     count_vectorizer_corpus = None
 
@@ -57,7 +57,7 @@ def count_vectorize(doc_ids, corpus, table_name, input="content"):
 
     else:
         debug("Vectorizing documents...")
-        count_vectorizer = CountVectorizerProgressBar(input=input, min_df=3, max_df=.66, stop_words=get_stopwords(), tokenizer=tokenize, ngram_range=(1,1), strip_accents="ascii", dtype=np.uint16)
+        count_vectorizer = CountVectorizerProgressBar(input=input_type, min_df=3, max_df=.66, stop_words=get_stopwords(), tokenizer=tokenize, ngram_range=(1,1), strip_accents="ascii", dtype=np.uint16)
         count_vectorizer_corpus = count_vectorizer.fit_transform(corpus)
         debug(" -> Done!", 1)
 

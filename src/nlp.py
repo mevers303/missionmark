@@ -301,7 +301,7 @@ def vectorize(corpus):
     else:
         debug("Vectorizing keywords...")
 
-        vectorizer = TfidfVectorizer(stop_words=get_stopwords(), tokenizer=tfidf_tokenize, max_df=.66, min_df=2, ngram_range=(1,1), sublinear_tf=True)
+        vectorizer = TfidfVectorizer(stop_words=get_stopwords(), tokenizer=tfidf_tokenize, max_df=.66, min_df=3, ngram_range=(1,1), sublinear_tf=True)
         corpus_tfidf = vectorizer.fit_transform(corpus)
 
         debug("Caching vectorizer...")
