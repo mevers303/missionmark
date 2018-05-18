@@ -85,7 +85,7 @@ def count_vectorize(doc_ids, corpus, table_name, input="content"):
         count_vectorizer_corpus = pickle_load(f"data/{table_name}/pickles/CountVectorizer_corpus.pkl")
         with open(f"data/{table_name}/pickles/CountVectorizer_doc_ids.txt", "r") as f:
             doc_ids = [line[:-1] for line in f]
-    else:
+    elif count_vectorizer_corpus is not None:
         debug("Transforming corpus...")
         count_vectorizer_corpus = count_vectorizer.transform(corpus)
         debug(" -> Done!", 1)
