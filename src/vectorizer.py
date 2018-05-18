@@ -98,7 +98,7 @@ def count_vectorize_cache(table_name):
     corpus_filenames, n_docs = get_cached_filenames(table_name)
     doc_ids = [file[:-4] for file in corpus_filenames]
 
-    count_vectorizer, doc_ids, count_vectorizer_corpus = count_vectorize(doc_ids, corpus_filenames, table_name, input="filename")
+    count_vectorizer, doc_ids, count_vectorizer_corpus = count_vectorize(doc_ids, corpus_filenames, table_name, input_type="filename")
 
     return count_vectorizer, count_vectorizer_corpus
 
