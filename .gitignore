@@ -2,7 +2,6 @@
 output/
 *.pkl
 features.txt
-pickle/
 data/
 missionmark_db_creds
 *__pycache__*
