@@ -63,6 +63,10 @@ def count_vectorize(doc_ids, corpus, table_name, input="content"):
 
         pickle_dump(count_vectorizer, f"data/{table_name}/pickles/CountVectorizer.pkl")
         pickle_dump(count_vectorizer_corpus, f"data/{table_name}/pickles/CountVectorizer_corpus.pkl")
+        with open(f"data/{table_name}/pickles/CountVectorizer_doc_ids.txt", "w") as f:
+            for doc_id in doc_ids:
+                f.write(doc_id + "\n")
+
 
     debug(f" -> Loaded vectorizer with {len(count_vectorizer.get_feature_names())} features!", 1)
 
