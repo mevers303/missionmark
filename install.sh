@@ -9,4 +9,4 @@ mkdir data/govwin_opportunity
 mkdir data/govwin_opportunity/docs
 mkdir data/govwin_opportunity/pickles
 
-pip install msgpack sklearn psycopg-binary
+pip install msgpack sklearn psycopg2-binary
