@@ -10,7 +10,7 @@ sys.path.append(os.getcwd())
 sys.path.append("src")
 
 
-from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer, TfidfTransformer
 from src.progress_bar_vetorizers import CountVectorizerProgressBar
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 from src.data import get_cached_filenames
@@ -100,8 +100,22 @@ def count_vectorize_cache(table_name):
 
     count_vectorizer, doc_ids, count_vectorizer_corpus = count_vectorize(doc_ids, corpus_filenames, table_name, input_type="filename")
 
-    return count_vectorizer, count_vectorizer_corpus
+    return count_vectorizer, doc_ids, count_vectorizer_corpus
+
+
+def cv_to_tfidf(count_vectorizer_corpus):
+
+    debug("Transforming to TF-IDF vector...")
+    tfidf_transformer = TfidfTransformer(sublinear_tf=True)
+    tfidf_corpus = tfidf_transformer.fit_transform(count_vectorizer_corpus)
+    debug(f" -> {count_vectorizer_corpus.shape[0]} vectors transformed!", 1)
+
+    return tfidf_transformer, tfidf_corpus
+
+
 
 
 if __name__ == "__main__":
-    count_vectorize_cache("fbo_files")
+    count_vectorizer, doc_ids, count_vectorizer_corpus = count_vectorize_cache("fbo_files")
+    tfidf_transformer, tfidf_corpus = cv_to_tfidf(count_vectorizer_corpus)
+    print("Done!")

@@ -8,7 +8,7 @@ from sys import stdout
 
 DEBUG_LEVEL = 2
 MODEL_PICKLING = True
-CORPUS_PICKLING = False
+CORPUS_PICKLING = True
 DOC_BUFFER_SIZE = 25000
 
 
