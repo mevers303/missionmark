@@ -112,6 +112,7 @@ def get_db_corpus(table_name, id_column, text_column, remove_html=False):
                FROM import.{table_name}
                WHERE {text_column} IS NOT NULL
                  AND {text_column} != ''
+                 AND LENGTH({text_column}) > {TEXT_COLUMN_MIN_LENGTH}
                  AND {id_column} IS NOT NULL
                  AND {id_column} != ''
             """
@@ -129,6 +130,7 @@ def get_db_corpus(table_name, id_column, text_column, remove_html=False):
                 FROM import.{table_name}
                 WHERE {text_column} IS NOT NULL
                   AND {text_column} != ''
+                  AND LENGTH({text_column}) > {TEXT_COLUMN_MIN_LENGTH}
                   AND {id_column} IS NOT NULL
                   AND {id_column} != ''
              """
