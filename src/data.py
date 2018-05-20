@@ -177,5 +177,5 @@ def strip_html(doc):
 
 if __name__ == "__main__":
 
-    cache_corpus("govwin_opportunity", "opportunity_id", "program_description", remove_html=True)
-    # cache_corpus("fbo_files", "id", "text", remove_html=False)
+    # cache_corpus("govwin_opportunity", "opportunity_id", "program_description", remove_html=True)
+    cache_corpus("fbo_files", "id", "text", remove_html=False)

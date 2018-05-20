@@ -148,7 +148,7 @@ def cv_to_tfidf(doc_ids, count_vectorizer_corpus, table_name):
 
 def main():
 
-    table_name = "govwin_opportunity"
+    table_name = "fbo_files"
 
     count_vectorizer, doc_ids, count_vectorizer_corpus = count_vectorize_cache(table_name)
     tfidf_transformer, doc_ids, tfidf_corpus = cv_to_tfidf(doc_ids, count_vectorizer_corpus, table_name)
