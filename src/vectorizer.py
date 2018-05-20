@@ -148,8 +148,10 @@ def cv_to_tfidf(doc_ids, count_vectorizer_corpus, table_name):
 
 def main():
 
-    count_vectorizer, doc_ids, count_vectorizer_corpus = count_vectorize_cache("fbo_files")
-    tfidf_transformer, doc_ids, tfidf_corpus = cv_to_tfidf(doc_ids, count_vectorizer_corpus)
+    table_name = "govwin_opportunity"
+
+    count_vectorizer, doc_ids, count_vectorizer_corpus = count_vectorize_cache(table_name)
+    tfidf_transformer, doc_ids, tfidf_corpus = cv_to_tfidf(doc_ids, count_vectorizer_corpus, table_name)
     print("Done!")
 
 if __name__ == "__main__":

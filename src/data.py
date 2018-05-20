@@ -58,10 +58,8 @@ def cache_corpus(table_name, id_column, text_column, remove_html=False):
         q = f"""
                SELECT COUNT(*)
                FROM import.{table_name}
-               WHERE {text_column} IS NOT NULL
-                 AND {text_column} != ''
+               WHERE LENGTH({text_column}) > {TEXT_COLUMN_MIN_LENGTH}
                  AND {id_column} IS NOT NULL
-                 AND {id_column} != ''
             """
 
         cursor.execute(q)
@@ -75,10 +73,8 @@ def cache_corpus(table_name, id_column, text_column, remove_html=False):
         q = f"""
                 SELECT {id_column}, {text_column}
                 FROM import.{table_name}
-                WHERE {text_column} IS NOT NULL
-                  AND {text_column} != ''
+                WHERE LENGTH({text_column}) > {TEXT_COLUMN_MIN_LENGTH}
                   AND {id_column} IS NOT NULL
-                  AND {id_column} != ''
              """
 
         cursor.execute(q)
@@ -110,11 +106,8 @@ def get_db_corpus(table_name, id_column, text_column, remove_html=False):
         q = f"""
                SELECT COUNT(*)
                FROM import.{table_name}
-               WHERE {text_column} IS NOT NULL
-                 AND {text_column} != ''
-                 AND LENGTH({text_column}) > {TEXT_COLUMN_MIN_LENGTH}
+               WHERE LENGTH({text_column}) > {TEXT_COLUMN_MIN_LENGTH}
                  AND {id_column} IS NOT NULL
-                 AND {id_column} != ''
             """
 
         cursor.execute(q)
@@ -128,11 +121,8 @@ def get_db_corpus(table_name, id_column, text_column, remove_html=False):
         q = f"""
                 SELECT {id_column}, {text_column}
                 FROM import.{table_name}
-                WHERE {text_column} IS NOT NULL
-                  AND {text_column} != ''
-                  AND LENGTH({text_column}) > {TEXT_COLUMN_MIN_LENGTH}
+                WHERE LENGTH({text_column}) > {TEXT_COLUMN_MIN_LENGTH}
                   AND {id_column} IS NOT NULL
-                  AND {id_column} != ''
              """
 
         cursor.execute(q)
@@ -188,3 +178,4 @@ def strip_html(doc):
 if __name__ == "__main__":
 
     cache_corpus("govwin_opportunity", "opportunity_id", "program_description", remove_html=True)
+    # cache_corpus("fbo_files", "id", "text", remove_html=False)

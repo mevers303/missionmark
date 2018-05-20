@@ -1,3 +1,3 @@
-python data.py
-python vectorizer.py
-sudo shutdown -hP now
+python src/data.py
+python src/vectorizer.py
+# sudo shutdown -hP now
