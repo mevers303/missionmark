@@ -147,7 +147,7 @@ def main():
     table_name = "fbo_files"
 
     count_vectorizer, doc_ids, count_vectorizer_corpus = count_vectorize_cache(table_name)
-    tfidf_transformer, tfidf_corpus = cv_to_tfidf(doc_ids, count_vectorizer_corpus, table_name)
+    # tfidf_transformer, tfidf_corpus = cv_to_tfidf(doc_ids, count_vectorizer_corpus, table_name)
     print("Done!")
 
 
