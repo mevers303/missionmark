@@ -167,6 +167,14 @@ def load_doc_ids(filename):
     return [line[:-1] for line in open(filename, "r")]
 
 
+def check_corpus_pickles(table_name):
+
+    return CORPUS_PICKLING and \
+           os.path.exists(f"data/{table_name}/pickles/TfidfTransformer.pkl") and \
+           os.path.exists(f"data/{table_name}/pickles/TfidfTransformer_corpus.pkl") and \
+           os.path.exists(f"data/{table_name}/pickles/TfidfTransformer_doc_ids.pkl")
+
+
 
 def _tag_visible(element):
     if element.parent.name in ['style', 'script', 'head', 'title', 'meta', '[document]']:

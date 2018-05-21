@@ -12,7 +12,7 @@ import numpy as np
 from src.nlp import nmf_model
 from src.globals import *
 from src.vectorizer import count_vectorize_cache, cv_to_tfidf, count_vectorize
-from src.data import get_db_corpus
+from src.data import get_db_corpus, check_corpus_pickles
 
 
 def rss_cost(V, W, H):
@@ -42,10 +42,14 @@ def main():
 
     table_name = "govwin_opportunity"
 
-    doc_ids, corpus = get_db_corpus("govwin_opportunity", "opportunity_id", "program_description", remove_html=True)
-    count_vectorizer, doc_ids, count_vectorizer_corpus = count_vectorize(doc_ids, corpus, table_name)
-    # count_vectorizer, doc_ids, count_vectorizer_corpus = count_vectorize_cache(table_name)
+    if check_corpus_pickles(table_name):
+        doc_ids = corpus = "dummy"
+    else:
+        doc_ids, corpus = get_db_corpus(table_name, "opportunity_id", "program_description", remove_html=True)
 
+
+    # count_vectorizer, doc_ids, count_vectorizer_corpus = count_vectorize_cache(table_name)
+    count_vectorizer, doc_ids, count_vectorizer_corpus = count_vectorize(doc_ids, corpus, table_name)
     tfidf_transformer, tfidf_corpus = cv_to_tfidf(doc_ids, count_vectorizer_corpus, table_name)
 
     nmf_models, costs = search_models(tfidf_corpus, 1, 50)
