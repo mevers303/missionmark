@@ -4,14 +4,14 @@
 # Script for building a dictionary of acronyms.
 
 
-from data import *
+from data import get_db_corpus
 from acronyms import acronyms_from_doc, add_multiple_to_acronyms, print_acronyms
 from globals import *
 
 
 acronyms = {}
 
-doc_ids, corpus = get_corpus()
+doc_ids, corpus = get_db_corpus("govwin_opportunity", "opportunity_id", "program_description", remove_html=True)
 completed = 0
 total = len(corpus)
 

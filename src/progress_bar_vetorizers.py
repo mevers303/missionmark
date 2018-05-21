@@ -1,8 +1,8 @@
 # Mark Evers
 # 5/18/18
 
-from sys import stdout
 import numpy
+from sys import stdout
 from sklearn.feature_extraction.text import CountVectorizer
 import time
 

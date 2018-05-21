@@ -7,7 +7,7 @@
 from sklearn.decomposition import NMF
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
-from data import *
+from data import get_db_corpus
 from globals import *
 
 import pickle
@@ -375,7 +375,7 @@ def main():
     n_topics = 100
     do_summaries = True
 
-    doc_ids, corpus = get_corpus()
+    doc_ids, corpus = get_db_corpus("govwin_opportunity", "opportunity_id", "program_description", remove_html=True)
 
     vectorizer, corpus_tfidf = vectorize(corpus)
     word_list = np.array(vectorizer.get_feature_names())

@@ -3,13 +3,13 @@
 # data.py
 # Script for getting data
 
-
+import os
 import psycopg2
-from globals import *
-import pickle
-
 from bs4 import BeautifulSoup
 from bs4.element import Comment
+
+from globals import *
+
 
 
 
