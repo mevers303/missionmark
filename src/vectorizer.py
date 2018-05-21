@@ -113,6 +113,7 @@ def cv_to_tfidf(doc_ids, count_vectorizer_corpus, table_name):
         if VECTORIZER_MODEL_PICKLING:
             pickle_dump(tfidf_transformer, f"../data/{table_name}/pickles/TfidfTransformer.pkl")
         if CORPUS_PICKLING:
+            del count_vectorizer_corpus  # so we don't get a memory error
             pickle_dump(tfidf_corpus, f"../data/{table_name}/pickles/TfidfTransformer_corpus.pkl")
             dump_doc_ids(doc_ids, f"../data/{table_name}/pickles/TfidfTransformer_doc_ids.txt")
 
@@ -126,6 +127,7 @@ def cv_to_tfidf(doc_ids, count_vectorizer_corpus, table_name):
         debug(" -> Done!", 1)
 
         if CORPUS_PICKLING:
+            del count_vectorizer_corpus  # so we don't get a memory error
             pickle_dump(tfidf_corpus, f"../data/{table_name}/pickles/TfidfTransformer_corpus.pkl")
             dump_doc_ids(doc_ids, f"../data/{table_name}/pickles/TfidfTransformer_doc_ids.txt")
 
