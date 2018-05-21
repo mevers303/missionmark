@@ -27,7 +27,7 @@ def get_stopwords():
     :return: A set of stopwords.
     """
 
-    with open("stopwords.txt", "r") as f:
+    with open("../stopwords.txt", "r") as f:
         custom_stopwords = {word[:-1] for word in f}
 
     return list(ENGLISH_STOP_WORDS.union(custom_stopwords))
