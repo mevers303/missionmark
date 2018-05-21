@@ -4,12 +4,17 @@
 from sys import stdout
 import numpy
 from sklearn.feature_extraction.text import CountVectorizer
+import time
 
 
 
 class CountVectorizerProgressBar(CountVectorizer):
     """
         scikit-learn's CountVectorizer object, but it displays a progress bar when fitting/transforming!
+            progress_bar_resolution is how long (in seconds) it should wait in between updating the progress bar.
+            progress_bar_clear (boolean) is whether or not to clear the progress bar displaying 100% from stdout when it
+                is done.
+
         Author: Mark Evers
         Github: http://github.com/mevers303
 
@@ -130,7 +135,7 @@ class CountVectorizerProgressBar(CountVectorizer):
     def __init__(self, input="content", encoding="utf-8", decode_error="strict", strip_accents=None, lowercase=True,
                  preprocessor=None, tokenizer=None, stop_words=None, token_pattern="(?u)\b\w\w+\b", ngram_range=(1, 1),
                  analyzer="word", max_df=1.0, min_df=1, max_features=None, vocabulary=None, binary=False,
-                 dtype=numpy.int64):
+                 dtype=numpy.int64, progress_bar_resolution=.333, progress_bar_clear=False):
 
         super().__init__(input=input, encoding=encoding, decode_error=decode_error, strip_accents=strip_accents,
                          lowercase=lowercase, preprocessor=preprocessor, tokenizer=tokenizer, stop_words=stop_words,
@@ -138,6 +143,9 @@ class CountVectorizerProgressBar(CountVectorizer):
                          min_df=min_df, max_features=max_features, vocabulary=vocabulary, binary=binary, dtype=dtype)
         self._n_docs = 0
         self._completed_docs = 0
+        self._progress_bar_last_time = 0
+        self._progress_bar_resolution = progress_bar_resolution
+        self._progress_bar_clear = progress_bar_clear
 
 
     def _analyzer_with_progress_bar(self, analyzer, doc):
@@ -175,6 +183,10 @@ class CountVectorizerProgressBar(CountVectorizer):
 
     def progress_bar(self):
 
+        time_now = time.time()
+        if time_now - self._progress_bar_last_time < self._progress_bar_resolution and self._completed_docs < self._n_docs:
+            return
+
         # percentage done
         percentage = int(self._completed_docs / self._n_docs * 100)
 
@@ -182,11 +194,13 @@ class CountVectorizerProgressBar(CountVectorizer):
         # print the progress bar
         stdout.write("[{}]{}%".format(("-" * int(percentage / 2) + (">" if percentage < 100 else "")).ljust(50), str(percentage).rjust(4)))
         # print the text figures
-        stdout.write(" ({}/{})".format(self._completed_docs, self._n_docs).rjust(15))
+        stdout.write(" ({}/{})".format(self._completed_docs, self._n_docs).rjust(14))
         stdout.flush()
 
-        if percentage == 100:
+        if percentage == 100 and self._progress_bar_clear:
             # print("\n")
             stdout.write('\r')
             stdout.write(' ' * 80)
             stdout.write('\r')
+
+        self._progress_bar_last_time = time_now

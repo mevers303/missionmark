@@ -289,7 +289,7 @@ def build_word_clouds(corpus_tfidf, corpus_topics, topic_nmf_weights, word_list,
 
 def vectorize(corpus):
 
-    if MODEL_PICKLING:
+    if VECTORIZER_MODEL_PICKLING:
         debug("Loading cached vectorizer...")
 
         with open("pickle/tfidf.pkl", "rb") as f:
@@ -301,7 +301,7 @@ def vectorize(corpus):
     else:
         debug("Vectorizing keywords...")
 
-        vectorizer = TfidfVectorizer(stop_words=get_stopwords(), tokenizer=tfidf_tokenize, max_df=.66, min_df=3, ngram_range=(1,1), sublinear_tf=True)
+        vectorizer = TfidfVectorizer(stop_words=get_stopwords(), tokenizer=tfidf_tokenize, max_df=MAX_DF, min_df=MIN_DF, ngram_range=(1,1), sublinear_tf=True)
         corpus_tfidf = vectorizer.fit_transform(corpus)
 
         debug("Caching vectorizer...")
@@ -329,9 +329,9 @@ def dump_features(word_list):
 
 
 
-def nmf_model(corpus_tfidf, n_topics, max_iter=500):
+def nmf_model(corpus_tfidf, n_topics, max_iter=500, skip_pickling=False):
 
-    if MODEL_PICKLING:
+    if TOPIC_MODEL_PICKLING and not skip_pickling:
         debug("Loading cached topic model...")
         with open("pickle/nmf.pkl", "rb") as f:
             model = pickle.load(f)
@@ -342,21 +342,29 @@ def nmf_model(corpus_tfidf, n_topics, max_iter=500):
         H = model.components_
 
     else:
-        debug("Sorting corpus into topics...")
+        # if skip_pickling, we're doing the n_topics search
+        if not skip_pickling:
+            debug("Sorting corpus into topics...")
 
         model = NMF(n_components=n_topics, max_iter=max_iter)
         W = model.fit_transform(corpus_tfidf)
         H = model.components_
-        debug(f" -> {model.n_iter_} iterations completed!", 1)
+        # if skip_pickling, we're doing the n_topics search
+        if not skip_pickling:
+            debug(f" -> {model.n_iter_} iterations completed!", 1)
 
-        debug("Caching topic model...")
-        with open("pickle/nmf.pkl", "wb") as f:
-            pickle.dump(model, f)
-        with open("pickle/W.pkl", "wb") as f:
-            pickle.dump(W, f)
-        debug(" -> Topic model cached!", 2)
+        if not skip_pickling:
+            debug("Caching topic model...")
+            with open("pickle/nmf.pkl", "wb") as f:
+                pickle.dump(model, f)
+            with open("pickle/W.pkl", "wb") as f:
+                pickle.dump(W, f)
+            debug(" -> Topic model cached!", 2)
 
-    debug(f" -> {n_topics} topics sorted!")
+    # if skip_pickling, we're doing the n_topics search
+    if not skip_pickling:
+        debug(f" -> {n_topics} topics sorted!")
+
     return model, W, H
 
 
