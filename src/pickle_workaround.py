@@ -2,7 +2,7 @@
 # https://stackoverflow.com/a/43419027
 
 import pickle
-from src.globals import debug
+from globals import debug
 
 
 class BigFile(object):

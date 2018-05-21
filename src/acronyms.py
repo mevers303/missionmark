@@ -6,8 +6,8 @@
 
 import re
 import string
-from src.nlp import split_sentences, split_tokens_soft
-from src.globals import *
+from nlp import split_sentences, split_tokens_soft
+from globals import *
 
 # These constants are for when it has to search for the acronym
 UNMATCHED_ACRONYM_FIRSTLETTER_SEARCH_LEN = 5  # how many words before the believed first word to search

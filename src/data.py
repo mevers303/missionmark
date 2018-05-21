@@ -4,14 +4,8 @@
 # Script for getting data
 
 
-import os
-import sys
-sys.path.append(os.getcwd())
-sys.path.append("src")
-
-
 import psycopg2
-from src.globals import *
+from globals import *
 import pickle
 
 from bs4 import BeautifulSoup
@@ -82,8 +76,8 @@ def cache_corpus(table_name, id_column, text_column, remove_html=False):
         completed = 0
         for doc_id, doc in cursor:
 
-            if not os.path.exists(f"data/{table_name}/docs/{doc_id}.txt"):
-                with open(f"data/{table_name}/docs/{doc_id}.txt", "w") as f:
+            if not os.path.exists(f"../data/{table_name}/docs/{doc_id}.txt"):
+                with open(f"../data/{table_name}/docs/{doc_id}.txt", "w") as f:
                     if remove_html:
                         doc = strip_html(doc)
                     f.write(doc)
@@ -143,7 +137,7 @@ def get_db_corpus(table_name, id_column, text_column, remove_html=False):
 
 def get_cached_filenames(table_name):
     debug("Searching for cached documents...")
-    cached_filenames = [f"data/{table_name}/docs/" + file for file in os.listdir(f"data/{table_name}/docs/") if file.endswith(".txt")]
+    cached_filenames = [f"../data/{table_name}/docs/" + file for file in os.listdir(f"../data/{table_name}/docs/") if file.endswith(".txt")]
     n_docs = len(cached_filenames)
     debug(f" -> {n_docs} cached documents found!", 1)
 
@@ -152,7 +146,7 @@ def get_cached_filenames(table_name):
 
 
 def get_cached_doc_ids(table_name):
-    return [file[:-4] for file in os.listdir(f"data/{table_name}/docs/") if file.endswith(".txt")]
+    return [file[:-4] for file in os.listdir(f"../data/{table_name}/docs/") if file.endswith(".txt")]
 
 
 
@@ -170,9 +164,9 @@ def load_doc_ids(filename):
 def check_corpus_pickles(table_name):
 
     return CORPUS_PICKLING and \
-           os.path.exists(f"data/{table_name}/pickles/TfidfTransformer.pkl") and \
-           os.path.exists(f"data/{table_name}/pickles/TfidfTransformer_corpus.pkl") and \
-           os.path.exists(f"data/{table_name}/pickles/TfidfTransformer_doc_ids.pkl")
+           os.path.exists(f"../data/{table_name}/pickles/TfidfTransformer.pkl") and \
+           os.path.exists(f"../data/{table_name}/pickles/TfidfTransformer_corpus.pkl") and \
+           os.path.exists(f"../data/{table_name}/pickles/TfidfTransformer_doc_ids.pkl")
 
 
 

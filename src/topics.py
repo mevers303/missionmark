@@ -2,17 +2,12 @@
 #  5/20/18
 
 
-import os
-import sys
-sys.path.append(os.getcwd())
-sys.path.append("src")
-
 import numpy as np
 
-from src.nlp import nmf_model
-from src.globals import *
-from src.vectorizer import count_vectorize_cache, cv_to_tfidf, count_vectorize
-from src.data import get_db_corpus, check_corpus_pickles
+from nlp import nmf_model
+from globals import *
+from vectorizer import count_vectorize_cache, cv_to_tfidf, count_vectorize
+from data import get_db_corpus, check_corpus_pickles
 
 
 def rss_cost(V, W, H):

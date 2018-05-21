@@ -7,8 +7,8 @@
 from sklearn.decomposition import NMF
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
-from src.data import *
-from src.globals import *
+from data import *
+from globals import *
 
 import pickle
 
