@@ -22,7 +22,7 @@ def get_connection():
     if not _connection:
         debug("Connecting to Postgres database...")
 
-        with open("missionmark_db_creds", "r") as f:
+        with open("../missionmark_db_creds", "r") as f:
             host = f.readline()[:-1]
             dbname = f.readline()[:-1]
             user = f.readline()[:-1]
@@ -166,7 +166,7 @@ def check_corpus_pickles(table_name):
     return CORPUS_PICKLING and \
            os.path.exists(f"../data/{table_name}/pickles/TfidfTransformer.pkl") and \
            os.path.exists(f"../data/{table_name}/pickles/TfidfTransformer_corpus.pkl") and \
-           os.path.exists(f"../data/{table_name}/pickles/TfidfTransformer_doc_ids.pkl")
+           os.path.exists(f"../data/{table_name}/pickles/TfidfTransformer_doc_ids.txt")
 
 
 
