@@ -156,6 +156,17 @@ def get_cached_doc_ids(table_name):
 
 
 
+def dump_doc_ids(doc_ids, filename):
+
+    with open(filename, "w") as f:
+        for doc_id in doc_ids:
+            f.write(str(doc_id) + "\n")
+
+
+def load_doc_ids(filename):
+    return [line[:-1] for line in open(filename, "r")]
+
+
 
 def _tag_visible(element):
     if element.parent.name in ['style', 'script', 'head', 'title', 'meta', '[document]']:
