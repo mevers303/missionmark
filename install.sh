@@ -10,4 +10,4 @@ mkdir output
 mkdir output/fbo_files
 mkdir output/govwin_opportunity
 
-pip install msgpack sklearn psycopg2-binary
+pip install msgpack sklearn psycopg2-binary wordcloud
