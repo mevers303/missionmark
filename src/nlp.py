@@ -5,7 +5,7 @@
 
 
 from sklearn.decomposition import NMF
-from sklearn.feature_extraction.text import TfidfVectorizer
+from TfidfVectorizer import TfidfVectorizer
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 from data import get_db_corpus
 import globals as g
@@ -228,7 +228,6 @@ def main():
 # if __name__ == "__main__":
 
     n_topics = 100
-    do_summaries = True
 
     doc_ids, corpus = get_db_corpus("govwin_opportunity", "opportunity_id", "program_description", remove_html=True)
 
@@ -241,10 +240,6 @@ def main():
     model, W, H = nmf_model(corpus_tfidf, n_topics)
     corpus_topics = get_corpus_top_topics(W)
 
-    if do_summaries:
-        summaries = sumarize_corpus(corpus, vectorizer)
-        dump_topic_corpus(corpus_topics, summaries, doc_ids)
-        del summaries  # save some RAM for the wordclouds
 
     if g.debug_LEVEL > 1:
          print_top_topic_words(H, word_list, 50)

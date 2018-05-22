@@ -30,9 +30,8 @@ def summarize_doc(doc, vectorizer, n_sentences=10):
 
     sentences = split_sentences(doc)
     sentence_tfidf = vectorizer.transform(sentences)
-    # sentences_wordcounts = np.count_nonzero(sentence_tfidf, axis=1)
 
-    sentence_scores = sentence_tfidf.sum(axis=1).A1  # / sentences_wordcounts
+    sentence_scores = sentence_tfidf.sum(axis=1).A1
     best_sentences_i = np.sort(np.argsort(sentence_scores)[:-n_sentences - 1:-1])
     best_sentences = [f"{'*' * 120}\n{'*' * 120}\n{'*' * 120}\n{sentences[i]}." for i in best_sentences_i]
 
@@ -44,6 +43,7 @@ def sumarize_corpus(corpus, vectorizer, n_sentences=10):
     """
     Summarizes an entire corpus.  Displays a progress bar.
     :param corpus: The corpus to be summarized
+    :param vectorizer: The TF-IDF vectorizer to be used for feature extraction.
     :param n_sentences: Number of sentences to include in the summary.
     :return: A corpus of summaries
     """
