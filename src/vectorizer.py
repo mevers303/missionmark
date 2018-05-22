@@ -128,6 +128,17 @@ def cv_to_tfidf(cv_corpus, table_name, model_from_pickle):
 
 
 
+def tfidf_vectorize(corpus, table_name, model_from_pickle, input_type="content"):
+
+    count_vectorizer, cv_corpus = count_vectorize(corpus, table_name, model_from_pickle, input_type)
+    vocabulary = count_vectorizer.get_feature_names()
+    _, tfidf_corpus = cv_to_tfidf(cv_corpus, table_name, model_from_pickle)
+
+    return tfidf_corpus, vocabulary
+
+
+
+
 
 def build_model_and_corpus_cache(doc_ids, corpus, table_name, input_type="content"):
 

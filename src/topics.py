@@ -42,7 +42,7 @@ def search_models(tfidf_corpus, min_topics, max_topics):
 
 def main():
 
-    min_topics = 5
+    min_topics = 2
     max_topics = 100
 
     doc_ids, tfidf_corpus = get_cached_corpus(TABLE_NAME, "tfidf")

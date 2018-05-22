@@ -6,7 +6,7 @@
 
 import re
 import string
-from nlp import split_sentences, split_tokens_soft
+from nlp import split_sentences
 from globals import *
 
 # These constants are for when it has to search for the acronym
@@ -14,6 +14,16 @@ UNMATCHED_ACRONYM_FIRSTLETTER_SEARCH_LEN = 5  # how many words before the believ
 UNMATCHED_ACRONYM_CAPITALS_SEARCH_LEN = 7  # how many capitalized letters to include when above doesn't work
 MAX_ACRONYM_LEN = 7  # any longer than this will be ignored
 DEBUG_LEVEL = 0
+
+
+
+def split_tokens_soft(text):
+    """
+    Splits into tokens, still allowing for special characters (for acronym extraction).
+    :param text: The text to be tokenized.
+    :return: A list of tokens.
+    """
+    return [token for token in re.split(r"[\s/\-\+,\\\"\:\;\[\]]+", text) if token]  # list comprehension removes empty strings
 
 
 

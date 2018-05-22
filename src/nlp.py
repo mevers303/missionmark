@@ -8,7 +8,9 @@ from sklearn.decomposition import NMF
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 from data import get_db_corpus
-from globals import *
+import globals as g
+
+from pickle_workaround import pickle_dump, pickle_load
 
 import pickle
 
@@ -24,41 +26,6 @@ from wordcloud import WordCloud
 
 
 
-stemmer = Stemmer()
-def tfidf_tokenize(text):
-    """
-    Tokenizes a document to be converted to a TF-IDF vector.
-    :param text: The text/document to be tokenized.
-    :return: A list of stemmed tokens.
-    """
-    return [stem(token) for token in split_tokens_hard(text)]
-    # return [token for token in split_tokens_hard(text)]
-
-
-def stem(token):
-
-    if token.endswith("ies") and len(token) > 6:
-        return token.replace("ies", "y")
-
-    if token.endswith("s") and len(token) > 5 and not token.endswith("ss"):
-        return token[:-1]
-
-    # if it's too long, it's probably a mashup of words, return a stopword
-    if len(token) > 16:
-        return "a"
-
-    return token
-
-
-def split_sentences(doc):
-    """
-    Splits a document into sentences.
-    :param doc: The document to be split
-    :return: A list of sentences.
-    """
-    return re.split(r"[\.\?\!]\s+", doc)
-
-
 def split_tokens_hard(text):
     """
     Splits into tokens based on any character that is NOT a letter, number, "-", or ".".
@@ -68,16 +35,6 @@ def split_tokens_hard(text):
     # return [token for token in re.split(r"[^a-zA-Z0-9\-\.]+|[\-\.]{3,}|\s[\-\.]+|[\-\.]+\s", text) if token]  # list comprehension removes empty strings
     # return [token for token in re.split(r"[^a-zA-Z0-9]+", text) if token]  # list comprehension removes empty strings
     return [token for token in re.split(r"[^a-zA-Z]+", text) if token]  # list comprehension removes empty strings
-
-
-def split_tokens_soft(text):
-    """
-    Splits into tokens, still allowing for special characters (for acronym extraction).
-    :param text: The text to be tokenized.
-    :return: A list of tokens.
-    """
-    return [token for token in re.split(r"[\s/\-\+,\\\"\:\;\[\]]+", text) if token]  # list comprehension removes empty strings
-
 
 
 def get_top_topic_words(H):
@@ -114,64 +71,6 @@ def print_top_topic_words(H, word_list, n_words=100):
 
 
 
-def get_stopwords():
-    """
-    Reads the stopwords from stopwords.txt and combines them with the ENGLISH_STOP_WORDS in sklearn.
-    :return: A set of stopwords.
-    """
-
-    with open("stopwords.txt", "r") as f:
-        custom_stopwords = {word[:-1] for word in f}
-
-    return list(ENGLISH_STOP_WORDS.union(custom_stopwords))
-
-
-
-def summarize_doc(doc, vectorizer, n_sentences=10):
-    """
-    Auto summarizes a document.
-    :param doc: The document to be summarized.
-    :param vectorizer: The TF-IDF vectorizer to be used for feature extraction.
-    :param n_sentences: Number of sentences to include in the summary.
-    :return: A string containing the best sentences, in order.
-    """
-
-    sentences = split_sentences(doc)
-    sentence_tfidf = vectorizer.transform(sentences)
-    # sentences_wordcounts = np.count_nonzero(sentence_tfidf, axis=1)
-
-    sentence_scores = sentence_tfidf.sum(axis=1).A1  # / sentences_wordcounts
-    best_sentences_i = np.sort(np.argsort(sentence_scores)[:-n_sentences - 1:-1])
-    best_sentences = [f"{'*' * 120}\n{'*' * 120}\n{'*' * 120}\n{sentences[i]}." for i in best_sentences_i]
-
-    return "\n\n\n".join(best_sentences)
-
-
-
-def sumarize_corpus(corpus, vectorizer, n_sentences=10):
-    """
-    Summarizes an entire corpus.  Displays a progress bar.
-    :param corpus: The corpus to be summarized
-    :param n_sentences: Number of sentences to include in the summary.
-    :return: A corpus of summaries
-    """
-
-    debug("Summarizing documents...")
-
-    summaries = []
-    n_docs = len(corpus)
-    completed = 0
-
-    for doc in corpus:
-        summaries.append(summarize_doc(doc, vectorizer, n_sentences))
-        completed += 1
-        progress_bar(completed, n_docs, 1)
-
-    debug(f" -> {len(summaries)} documents summarized!", 1)
-    return summaries
-
-
-
 def get_corpus_top_topics(W):
     """
     Gets the best single topic for each document.
@@ -202,7 +101,7 @@ def dump_topic_corpus(corpus_topics, corpus, doc_ids):
     :return: None
     """
 
-    debug("Saving summaries to disk based on topic...")
+    g.debug("Saving summaries to disk based on topic...")
 
     for i in range(corpus_topics.size):
 
@@ -214,7 +113,7 @@ def dump_topic_corpus(corpus_topics, corpus, doc_ids):
         with open(filename, "w") as f:
             f.write(corpus[i])
 
-    debug(f" -> {len(corpus)} files created!", 1)
+    g.debug(f" -> {len(corpus)} files created!", 1)
 
 
 def get_tfidf_topic_weights(corpus_tfidf, corpus_topics, n_topics):
@@ -243,8 +142,8 @@ def print_tfidf_topic_words(corpus_tfidf, corpus_topics, word_list, n_topics, n_
         topic_words = word_list[topic_top_words_i[topic_i, :n_words]]
         top_words.append(topic_words)
 
-        debug(f"TF-IDF words for topic {topic_i}:", 2)
-        debug(str(topic_words), 2)
+        g.debug(f"TF-IDF words for topic {topic_i}:", 2)
+        g.debug(str(topic_words), 2)
 
     return top_words
 
@@ -252,9 +151,9 @@ def print_tfidf_topic_words(corpus_tfidf, corpus_topics, word_list, n_topics, n_
 
 def build_word_clouds(corpus_tfidf, corpus_topics, topic_nmf_weights, word_list, n_topics):
 
-    debug("Generating topic word clouds... (this may take a while)")
+    g.debug("Generating topic word clouds... (this may take a while)")
     completed = 0
-    progress_bar(completed, n_topics)
+    g.progress_bar(completed, n_topics)
 
     topic_tfidf_weights = get_tfidf_topic_weights(corpus_tfidf, corpus_topics, n_topics)
     topic_top_tfidf_words_i = np.argsort(topic_tfidf_weights, axis=1)[:, ::-1]
@@ -281,107 +180,62 @@ def build_word_clouds(corpus_tfidf, corpus_topics, topic_nmf_weights, word_list,
         wc.to_file(os.path.join(path, "tf-idf_wordcloud.png"))
 
         completed += 1
-        progress_bar(completed, n_topics)
+        g.progress_bar(completed, n_topics)
 
-    debug(f" -> {n_topics} word clouds generated!")
+    g.debug(f" -> {n_topics} word clouds generated!")
 
-
-
-def vectorize(corpus):
-
-    if VECTORIZER_MODEL_PICKLING:
-        debug("Loading cached vectorizer...")
-
-        with open("pickle/tfidf.pkl", "rb") as f:
-            vectorizer = pickle.load(f)
-
-        with open("pickle/corpus_tfidf.pkl", "rb") as f:
-            corpus_tfidf = pickle.load(f)
-
-    else:
-        debug("Vectorizing keywords...")
-
-        vectorizer = TfidfVectorizer(stop_words=get_stopwords(), tokenizer=tfidf_tokenize, max_df=MAX_DF, min_df=MIN_DF, ngram_range=(1,1), sublinear_tf=True)
-        corpus_tfidf = vectorizer.fit_transform(corpus)
-
-        debug("Caching vectorizer...")
-        with open("pickle/tfidf.pkl", "wb") as f:
-            pickle.dump(vectorizer, f)
-        with open("pickle/corpus_tfidf.pkl", "wb") as f:
-            pickle.dump(corpus_tfidf, f)
-        debug(" -> Vectorizer cached!", 2)
-
-    debug(f" -> {corpus_tfidf.shape[1]} tokens found!", 1)
-    return vectorizer, corpus_tfidf
 
 
 
 def dump_features(word_list):
 
-    debug("Writing word list to features.txt...")
+    g.debug("Writing word list to features.txt...")
 
     with open("features.txt", "w") as f:
         for word in word_list:
             f.write(word + "\n")
 
-    debug(f" -> Wrote {len(word_list)} to file!")
+    g.debug(f" -> Wrote {len(word_list)} to file!")
 
 
 
 
-def nmf_model(corpus_tfidf, n_topics, max_iter=500, skip_pickling=False):
+def nmf_model(corpus_tfidf, n_topics, table_name, model_from_pickle, max_iter=500, no_output=False):
 
-    if TOPIC_MODEL_PICKLING and not skip_pickling:
-        debug("Loading cached topic model...")
-        with open("pickle/nmf.pkl", "rb") as f:
-            model = pickle.load(f)
-
-        with open("pickle/W.pkl", "rb") as f:
-            W = pickle.load(f)
-
-        H = model.components_
+    if model_from_pickle and os.path.exists(f"../data/{table_name}/pickles/NMF.pkl"):
+        nmf = pickle_load(f"../data/{table_name}/pickles/NMF.pkl")
+        W = pickle_load(f"../data/{table_name}/pickles/NMF_W.pkl")
+        H = nmf.components_
 
     else:
-        # if skip_pickling, we're doing the n_topics search
-        if not skip_pickling:
-            debug("Sorting corpus into topics...")
+        if not no_output:
+            g.debug("Sorting corpus into topics...")
+        nmf = NMF(n_components=n_topics, max_iter=max_iter)
+        W = nmf.fit_transform(corpus_tfidf)
+        H = nmf.components_
 
-        model = NMF(n_components=n_topics, max_iter=max_iter)
-        W = model.fit_transform(corpus_tfidf)
-        H = model.components_
-        # if skip_pickling, we're doing the n_topics search
-        if not skip_pickling:
-            debug(f" -> {model.n_iter_} iterations completed!", 1)
+        if not no_output:
+            g.debug(f" -> {model.n_iter_} iterations completed!", 1)
 
-        if not skip_pickling:
-            debug("Caching topic model...")
-            with open("pickle/nmf.pkl", "wb") as f:
-                pickle.dump(model, f)
-            with open("pickle/W.pkl", "wb") as f:
-                pickle.dump(W, f)
-            debug(" -> Topic model cached!", 2)
 
     # if skip_pickling, we're doing the n_topics search
-    if not skip_pickling:
-        debug(f" -> {n_topics} topics sorted!")
-
-    return model, W, H
+    if not no_output:
+        g.debug(f" -> {n_topics} topics sorted!", 1)
+    return nmf, W, H
 
 
 def main():
 # if __name__ == "__main__":
 
-    DEBUG_LEVEL = 2
     n_topics = 100
     do_summaries = True
 
     doc_ids, corpus = get_db_corpus("govwin_opportunity", "opportunity_id", "program_description", remove_html=True)
 
-    vectorizer, corpus_tfidf = vectorize(corpus)
-    word_list = np.array(vectorizer.get_feature_names())
+    corpus_tfidf, vocabulary = tfidf_vectorize(corpus)
 
-    if DEBUG_LEVEL > 1:
-        dump_features(word_list)
+    if g.debug_LEVEL > 1:
+        dump_features(vocabulary)
     # exit(0)
 
     model, W, H = nmf_model(corpus_tfidf, n_topics)
@@ -392,14 +246,14 @@ def main():
         dump_topic_corpus(corpus_topics, summaries, doc_ids)
         del summaries  # save some RAM for the wordclouds
 
-    if DEBUG_LEVEL > 1:
+    if g.debug_LEVEL > 1:
          print_top_topic_words(H, word_list, 50)
          print_tfidf_topic_words(corpus_tfidf, corpus_topics, word_list, n_topics, 15)
 
     build_word_clouds(corpus_tfidf, corpus_topics, H, word_list, n_topics)
 
 
-    debug("Done!")
+    g.debug("Done!")
 
 
 if __name__ == "__main__":
