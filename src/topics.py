@@ -24,7 +24,7 @@ def search_models(tfidf_corpus, min_topics, max_topics):
     costs = []
     intertopic_similarities = []
     interdocument_similarities = []
-    n_models = max_topics - min_topics
+    n_models = max_topics - min_topics + 1
 
     progress_bar(0, n_models)
     for i in range(min_topics, max_topics + 1):
@@ -32,6 +32,7 @@ def search_models(tfidf_corpus, min_topics, max_topics):
         nmf, W, H = nmf_model(tfidf_corpus, i, skip_pickling=True)
         nmf_models.append(nmf)
         costs.append(rss_cost(tfidf_corpus, W, H))
+        # costs.append(1)
         intertopic_similarities.append(pdist(H, "cosine").mean())
         interdocument_similarities.append(pdist(W, "cosine").mean())
         progress_bar(i - min_topics + 1, n_models)
@@ -41,8 +42,8 @@ def search_models(tfidf_corpus, min_topics, max_topics):
 
 def main():
 
-    min_topics = 10
-    max_topics = 50
+    min_topics = 5
+    max_topics = 100
 
     doc_ids, tfidf_corpus = get_cached_corpus(TABLE_NAME, "tfidf")
     nmf_models, costs, intertopic_similarities, interdocument_similarities = search_models(tfidf_corpus, min_topics, max_topics)
@@ -55,16 +56,23 @@ def main():
     axes[0].set_xlabel("Topics")
     axes[0].set_ylabel("RSS")
     axes[0].plot(x, costs)
+    axes[0].set_ylim(0)
 
     axes[1].set_title("Intertopic Cosine Similarity")
     axes[1].set_xlabel("Topics")
     axes[1].set_ylabel("Cosine Similarity")
     axes[1].plot(x, intertopic_similarities)
+    axes[1].set_ylim(0, 1)
 
-    axes[1].set_title("Interdocument Cosine Similarity")
-    axes[1].set_xlabel("Topics")
-    axes[1].set_ylabel("Cosine Similarity")
-    axes[1].plot(x, interdocument_similarities)
+    axes[2].set_title("Interdocument Cosine Similarity")
+    axes[2].set_xlabel("Topics")
+    axes[2].set_ylabel("Cosine Similarity")
+    axes[2].plot(x, interdocument_similarities)
+    axes[2].set_ylim(0, 1)
+
+    plt.tight_layout()
+    plt.show()
+    print("yeah")
 
 
 
