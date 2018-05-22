@@ -25,7 +25,7 @@ STRIP_HTML = True
 
 
 _PROGRESS_BAR_LAST_TIME = 0
-def progress_bar(done, total, resolution=0.333):
+def progress_bar(done, total, resolution=0.333, text=""):
     """
     Prints a progress bar to stdout.
     :param done: Number of items complete
@@ -48,12 +48,14 @@ def progress_bar(done, total, resolution=0.333):
     stdout.write("[{}]{}%".format(("-" * int(i / 2) + (">" if i < 100 else "")).ljust(50), str(i).rjust(4)))
     # print the text figures
     stdout.write(" ({}/{})".format(done, total).rjust(15))
+    if text:
+        stdout.write(" " + text)
     stdout.flush()
 
     if i == 100:
         # print("\n")
         stdout.write('\r')
-        stdout.write(' ' * 80)
+        stdout.write(' ' * 120)
         stdout.write('\r')
 
     _PROGRESS_BAR_LAST_TIME = time_now
