@@ -7,7 +7,7 @@
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer, TfidfTransformer
 from progress_bar_vetorizers import CountVectorizerProgressBar
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
-from data import get_cached_filenames, dump_doc_ids, load_doc_ids
+from data import get_cached_filenames, dump_doc_ids, load_doc_ids, get_db_corpus
 from globals import *
 
 from pickle_workaround import pickle_dump, pickle_load
@@ -43,109 +43,113 @@ def tokenize(text):
     return [stemmer.stem(token) for token in re.split(r"[^a-zA-Z]+", text) if token]
 
 
-def count_vectorize(doc_ids, corpus, table_name, input_type="content"):
 
-    count_vectorizer_corpus = None
+def get_cached_corpus(table_name, name):
+    
+    if os.path.exists(f"../data/{table_name}/pickles/{name}_corpus.pkl") and os.path.exists(f"../data/{table_name}/pickles/{name}_doc_ids.txt"):
+        doc_ids = load_doc_ids(f"../data/{table_name}/pickles/{name}_doc_ids.txt")
+        cv_corpus = pickle_load(f"../data/{table_name}/pickles/{name}_corpus.pkl")
+        return doc_ids, cv_corpus
+    else:
+        return None, None
 
-    if VECTORIZER_MODEL_PICKLING and os.path.exists(f"../data/{table_name}/pickles/CountVectorizer.pkl"):
+
+
+
+def cache_corpus(doc_ids, corpus, table_name, name):
+
+    dump_doc_ids(doc_ids, f"../data/{table_name}/pickles/{name}_corpus_doc_ids.txt")
+    pickle_dump(corpus, f"../data/{table_name}/pickles/{name}_corpus.pkl")
+
+
+
+
+def count_vectorize(corpus, table_name, model_from_pickle, input_type="content"):
+
+    cv_corpus = None
+
+
+    if model_from_pickle and os.path.exists(f"../data/{table_name}/pickles/CountVectorizer.pkl"):
         count_vectorizer = pickle_load(f"../data/{table_name}/pickles/CountVectorizer.pkl")
 
     else:
         debug("Vectorizing documents...")
         count_vectorizer = CountVectorizerProgressBar(input=input_type, max_features=MAX_FEATURES, min_df=MIN_DF, max_df=MAX_DF, stop_words=get_stopwords(), tokenizer=tokenize, ngram_range=(1, N_GRAMS), strip_accents="ascii", dtype=np.uint16, progress_bar_clear=True)
-        count_vectorizer_corpus = count_vectorizer.fit_transform(corpus)
+        cv_corpus = count_vectorizer.fit_transform(corpus)
         count_vectorizer.stop_words_ = None  # we can delete this to take up less memory (useful for pickling)
         debug(" -> Done!", 1)
-
-        if VECTORIZER_MODEL_PICKLING:
-            pickle_dump(count_vectorizer, f"../data/{table_name}/pickles/CountVectorizer.pkl")
-        if CORPUS_PICKLING:
-            pickle_dump(count_vectorizer_corpus, f"../data/{table_name}/pickles/CountVectorizer_corpus.pkl")
-            dump_doc_ids(doc_ids, f"../data/{table_name}/pickles/CountVectorizer_doc_ids.txt")
-
 
     debug(f" -> Loaded vectorizer with {len(count_vectorizer.get_feature_names())} features!", 1)
 
 
-    if count_vectorizer_corpus is None and CORPUS_PICKLING and os.path.exists(f"../data/{table_name}/pickles/CountVectorizer_corpus.pkl"):
-        count_vectorizer_corpus = pickle_load(f"../data/{table_name}/pickles/CountVectorizer_corpus.pkl")
-        doc_ids = load_doc_ids(f"../data/{table_name}/pickles/CountVectorizer_doc_ids.txt")
-    elif count_vectorizer_corpus is None:
+    if cv_corpus is None:
         debug("Transforming corpus...")
-        count_vectorizer_corpus = count_vectorizer.transform(corpus)
+        cv_corpus = count_vectorizer.transform(corpus)
         debug(" -> Done!", 1)
 
-        if CORPUS_PICKLING:
-            pickle_dump(count_vectorizer_corpus, f"../data/{table_name}/pickles/CountVectorizer_corpus.pkl")
-            dump_doc_ids(doc_ids, f"../data/{table_name}/pickles/CountVectorizer_doc_ids.txt")
 
-    debug(f" -> Loaded {count_vectorizer_corpus.shape[0]} documents with {count_vectorizer_corpus.shape[1]} features!", 1)
-
-
-    return count_vectorizer, doc_ids, count_vectorizer_corpus
+    debug(f" -> Loaded {cv_corpus.shape[0]} documents with {cv_corpus.shape[1]} features!", 1)
+    return count_vectorizer, cv_corpus
 
 
 def count_vectorize_cache(table_name):
 
-    global n_docs
-
     corpus_filenames, n_docs = get_cached_filenames(table_name)
     doc_ids = [file[:-4] for file in corpus_filenames]
 
-    count_vectorizer, doc_ids, count_vectorizer_corpus = count_vectorize(doc_ids, corpus_filenames, table_name, input_type="filename")
+    count_vectorizer, doc_ids, cv_corpus = count_vectorize(doc_ids, corpus_filenames, table_name, input_type="filename")
 
-    return count_vectorizer, doc_ids, count_vectorizer_corpus
+    return count_vectorizer, doc_ids, cv_corpus
 
 
-def cv_to_tfidf(doc_ids, count_vectorizer_corpus, table_name):
+def cv_to_tfidf(cv_corpus, table_name, model_from_pickle):
 
     tfidf_corpus = None
 
-    if VECTORIZER_MODEL_PICKLING and os.path.exists(f"../data/{table_name}/pickles/TfidfTransformer.pkl"):
+
+    if model_from_pickle and os.path.exists(f"../data/{table_name}/pickles/TfidfTransformer.pkl"):
         tfidf_transformer = pickle_load(f"../data/{table_name}/pickles/TfidfTransformer.pkl")
 
     else:
         debug("Transforming to TF-IDF vector...")
         tfidf_transformer = TfidfTransformer(sublinear_tf=True)
-        tfidf_corpus = tfidf_transformer.fit_transform(count_vectorizer_corpus)
+        tfidf_corpus = tfidf_transformer.fit_transform(cv_corpus)
         debug(" -> Done!", 1)
 
-        if VECTORIZER_MODEL_PICKLING:
-            pickle_dump(tfidf_transformer, f"../data/{table_name}/pickles/TfidfTransformer.pkl")
-        if CORPUS_PICKLING:
-            del count_vectorizer_corpus  # so we don't get a memory error
-            pickle_dump(tfidf_corpus, f"../data/{table_name}/pickles/TfidfTransformer_corpus.pkl")
-            dump_doc_ids(doc_ids, f"../data/{table_name}/pickles/TfidfTransformer_doc_ids.txt")
 
-
-    if tfidf_corpus is None and CORPUS_PICKLING and os.path.exists(f"../data/{table_name}/pickles/TfidfTransformer_corpus.pkl"):
-        tfidf_corpus = pickle_load(f"../data/{table_name}/pickles/TfidfTransformer_corpus.pkl")
-        doc_ids = load_doc_ids(f"../data/{table_name}/pickles/TfidfTransformer_doc_ids.txt")
-    elif tfidf_corpus is None:
+    if tfidf_corpus is None:
         debug("Transforming corpus to TF-IDF...")
-        tfidf_corpus = tfidf_transformer.transform(count_vectorizer_corpus)
+        tfidf_corpus = tfidf_transformer.transform(cv_corpus)
         debug(" -> Done!", 1)
 
-        if CORPUS_PICKLING:
-            del count_vectorizer_corpus  # so we don't get a memory error
-            pickle_dump(tfidf_corpus, f"../data/{table_name}/pickles/TfidfTransformer_corpus.pkl")
-            dump_doc_ids(doc_ids, f"../data/{table_name}/pickles/TfidfTransformer_doc_ids.txt")
 
-
-    debug(f" -> {tfidf_corpus.shape[0]} vectors transformed!", 1)
-
+    debug(f" -> {tfidf_corpus.shape[0]} count vectors with {tfidf_corpus.shape[1]} features transformed!", 1)
     return tfidf_transformer, tfidf_corpus
 
 
 
 
+def build_model_and_corpus_cache(doc_ids, corpus, table_name, input_type="content"):
+
+    cv_model, cv_corpus = count_vectorize(corpus, table_name, False, input_type)
+    pickle_dump(cv_model, f"../data/{table_name}/pickles/CountVectorizer.pkl")
+    cache_corpus(doc_ids, cv_corpus, table_name, "cv")
+
+    del cv_model  # save some memory
+    tfidf_model, tfidf_corpus = cv_to_tfidf(cv_corpus, table_name, False)
+    del cv_corpus  # save some memory
+    pickle_dump(tfidf_model, f"../data/{table_name}/pickles/TfidfTransformer.pkl")
+    cache_corpus(doc_ids, tfidf_corpus, table_name, "tfidf")
+
+    print("Done!")
+
+
+
 def main():
 
-    table_name = "fbo_files"
-
-    count_vectorizer, doc_ids, count_vectorizer_corpus = count_vectorize_cache(table_name)
-    # tfidf_transformer, tfidf_corpus = cv_to_tfidf(doc_ids, count_vectorizer_corpus, table_name)
-    print("Done!")
+    get_command_line_options()
+    doc_ids, corpus = get_db_corpus(TABLE_NAME, ID_COLUMN, TEXT_COLUMN, remove_html=STRIP_HTML)
+    build_model_and_corpus_cache(doc_ids, corpus, TABLE_NAME)
 
 
 if __name__ == "__main__":
