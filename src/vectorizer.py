@@ -45,7 +45,7 @@ def tokenize(text):
 
 
 def get_cached_corpus(table_name, name):
-    
+
     if os.path.exists(f"../data/{table_name}/pickles/{name}_corpus.pkl") and os.path.exists(f"../data/{table_name}/pickles/{name}_doc_ids.txt"):
         doc_ids = load_doc_ids(f"../data/{table_name}/pickles/{name}_doc_ids.txt")
         cv_corpus = pickle_load(f"../data/{table_name}/pickles/{name}_corpus.pkl")
@@ -58,7 +58,7 @@ def get_cached_corpus(table_name, name):
 
 def cache_corpus(doc_ids, corpus, table_name, name):
 
-    dump_doc_ids(doc_ids, f"../data/{table_name}/pickles/{name}_corpus_doc_ids.txt")
+    dump_doc_ids(doc_ids, f"../data/{table_name}/pickles/{name}_doc_ids.txt")
     pickle_dump(corpus, f"../data/{table_name}/pickles/{name}_corpus.pkl")
 
 
@@ -147,7 +147,6 @@ def build_model_and_corpus_cache(doc_ids, corpus, table_name, input_type="conten
 
 def main():
 
-    get_command_line_options()
     doc_ids, corpus = get_db_corpus(TABLE_NAME, ID_COLUMN, TEXT_COLUMN, remove_html=STRIP_HTML)
     build_model_and_corpus_cache(doc_ids, corpus, TABLE_NAME)
 

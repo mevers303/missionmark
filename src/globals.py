@@ -13,7 +13,7 @@ TOPIC_MODEL_PICKLING = True
 CORPUS_PICKLING = True
 DOC_BUFFER_SIZE = 100000
 MAX_FEATURES = 50000
-MIN_DF = 2
+MIN_DF = 1
 MAX_DF = .66
 N_GRAMS = 1
 
@@ -83,7 +83,7 @@ def get_command_line_options():
     parser.add_argument("--corpus-pickling", type=int, choices=[0, 1], help="Whether or not to load cached corpora (default = True)")
     parser.add_argument("--cursor-size", type=int, help="The size of the database cursor buffer (default = 100000)")
     parser.add_argument("--max-features", type=int, help="The maximum number of features (keywords) to use in the vectorizers (default = 50000)")
-    parser.add_argument("--min-df", type=int, help="The minimum document frequency for a keyword in the vectorizers (default = 2")
+    parser.add_argument("--min-df", type=int, help="The minimum document frequency for a keyword in the vectorizers (default = 1)")
     parser.add_argument("--max-df", type=float, help="The maximum document frequency for a keyword in the vectorizers (default = 0.66)")
     parser.add_argument("--n-grams", type=int, help="The size of the N-grams to extract from the corpora (default = 1)")
 
@@ -116,3 +116,6 @@ def get_command_line_options():
         N_GRAMS = args.n_grams
 
     return args
+
+
+args = get_command_line_options()

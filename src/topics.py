@@ -6,8 +6,11 @@ import numpy as np
 
 from nlp import nmf_model
 from globals import *
-from vectorizer import count_vectorize_cache, cv_to_tfidf, count_vectorize
+from vectorizer import count_vectorize_cache, cv_to_tfidf, count_vectorize, get_cached_corpus
 from data import get_db_corpus, check_corpus_pickles
+from scipy.spatial.distance import pdist
+import matplotlib.pyplot as plt
+
 
 
 def rss_cost(V, W, H):
@@ -19,36 +22,51 @@ def search_models(tfidf_corpus, min_topics, max_topics):
     debug("Building NMF topics...")
     nmf_models = []
     costs = []
+    intertopic_similarities = []
+    interdocument_similarities = []
+    n_models = max_topics - min_topics
 
-    progress_bar(0, max_topics)
+    progress_bar(0, n_models)
     for i in range(min_topics, max_topics + 1):
 
         nmf, W, H = nmf_model(tfidf_corpus, i, skip_pickling=True)
-        rss = rss_cost(tfidf_corpus, W, H)
-
         nmf_models.append(nmf)
-        costs.append(rss)
-        progress_bar(i, max_topics)
+        costs.append(rss_cost(tfidf_corpus, W, H))
+        intertopic_similarities.append(pdist(H, "cosine").mean())
+        interdocument_similarities.append(pdist(W, "cosine").mean())
+        progress_bar(i - min_topics + 1, n_models)
 
-    return nmf_models, costs
+    return nmf_models, costs, intertopic_similarities, interdocument_similarities
 
 
 def main():
 
-    table_name = "govwin_opportunity"
+    min_topics = 10
+    max_topics = 50
 
-    if check_corpus_pickles(table_name):
-        doc_ids = corpus = "dummy"
-    else:
-        doc_ids, corpus = get_db_corpus(table_name, "opportunity_id", "program_description", remove_html=True)
+    doc_ids, tfidf_corpus = get_cached_corpus(TABLE_NAME, "tfidf")
+    nmf_models, costs, intertopic_similarities, interdocument_similarities = search_models(tfidf_corpus, min_topics, max_topics)
+
+    fig, axes = plt.subplots(3, 1)
+    axes = axes.flatten()
+    x = np.arange(min_topics, max_topics + 1)
+
+    axes[0].set_title("RSS")
+    axes[0].set_xlabel("Topics")
+    axes[0].set_ylabel("RSS")
+    axes[0].plot(x, costs)
+
+    axes[1].set_title("Intertopic Cosine Similarity")
+    axes[1].set_xlabel("Topics")
+    axes[1].set_ylabel("Cosine Similarity")
+    axes[1].plot(x, intertopic_similarities)
+
+    axes[1].set_title("Interdocument Cosine Similarity")
+    axes[1].set_xlabel("Topics")
+    axes[1].set_ylabel("Cosine Similarity")
+    axes[1].plot(x, interdocument_similarities)
 
 
-    # count_vectorizer, doc_ids, count_vectorizer_corpus = count_vectorize_cache(table_name)
-    count_vectorizer, doc_ids, count_vectorizer_corpus = count_vectorize(doc_ids, corpus, table_name)
-    tfidf_transformer, tfidf_corpus = cv_to_tfidf(doc_ids, count_vectorizer_corpus, table_name)
-
-    nmf_models, costs = search_models(tfidf_corpus, 1, 50)
-    print(costs)
 
 
 if __name__ == "__main__":
