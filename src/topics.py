@@ -33,9 +33,9 @@ def search_models(tfidf_corpus, min_topics, max_topics):
         nmf_models.append(nmf)
         costs.append(nmf.reconstruction_err_**2)
         intertopic_similarities.append(1 - pdist(H, metric="cosine", n_jobs=-1).mean())
-        interdocument_similarities = np.mean([1 - pdist(tfidf_corpus[top_topics == topic_i].A, metric="cosine", n_jobs=-1).mean() for topic_i in range(i)])
+        interdocument_similarities.append(np.mean([1 - pdist(tfidf_corpus[top_topics == topic_i].A, metric="cosine", n_jobs=-1).mean() for topic_i in range(i)]))
 
-        progress_bar(i - min_topics + 1, n_models, f"{nmf.n_iter_} iterations")
+        progress_bar(i - min_topics + 1, n_models, text=f"{nmf.n_iter_} iterations")
 
     return nmf_models, costs, intertopic_similarities, interdocument_similarities
 
