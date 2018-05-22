@@ -36,6 +36,11 @@ def search_models(tfidf_corpus, min_topics, max_topics):
         g.progress_bar(i - min_topics + 1, n_models, text=f"{nmf.n_iter_} iterations")
 
 
+    return nmf_models, costs, intertopic_similarities, interdocument_similarities
+
+
+def plot_results(min_topics, max_topics, costs, intertopic_similarities, interdocument_similarities):
+
     fig, axes = plt.subplots(4, 1)
     axes = axes.flatten()
     x = np.arange(min_topics, max_topics + 1)
@@ -60,9 +65,6 @@ def search_models(tfidf_corpus, min_topics, max_topics):
     print("yeah")
 
 
-    return nmf_models, costs, intertopic_similarities, interdocument_similarities
-
-
 def main():
 
     min_topics = 5
@@ -70,7 +72,7 @@ def main():
 
     doc_ids, tfidf_corpus = get_cached_corpus(g.TABLE_NAME, "tfidf")
     nmf_models, costs, intertopic_similarities, interdocument_similarities = search_models(tfidf_corpus, min_topics, max_topics)
-
+    plot_results(min_topics, max_topics, costs, intertopic_similarities, interdocument_similarities)
 
 
 if __name__ == "__main__":
