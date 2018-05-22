@@ -120,4 +120,4 @@ def get_command_line_options():
     return args
 
 
-args = get_command_line_options()
+# args = get_command_line_options()
