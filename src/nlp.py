@@ -207,9 +207,9 @@ def nmf_model(corpus_tfidf, n_topics, table_name, model_from_pickle, max_iter=50
 
 
 
-def build_model_and_wordclouds(tfidf_corpus, vocabulary, table_name):
+def build_model_and_wordclouds(n_topics, tfidf_corpus, vocabulary, table_name):
 
-    nmf, W, H = nmf_model(tfidf_corpus, g.N_TOPICS, table_name, False)
+    nmf, W, H = nmf_model(tfidf_corpus, n_topics, table_name, False)
     pickle_dump(nmf, f"../data/{table_name}/pickles/NMF.pkl")
     pickle_dump(W, f"../data/{table_name}/pickles/W.pkl")
 
@@ -227,7 +227,7 @@ def main():
     doc_ids, tfidf_corpus = get_cached_corpus(g.TABLE_NAME, "tfidf")
     vocabulary = get_features(g.TABLE_NAME)
 
-    build_model_and_wordclouds(tfidf_corpus, vocabulary, g.TABLE_NAME)
+    build_model_and_wordclouds(g.N_TOPICS, tfidf_corpus, vocabulary, g.TABLE_NAME)
 
 
 if __name__ == "__main__":
