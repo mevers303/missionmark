@@ -8,6 +8,8 @@ mkdir data/govwin_opportunity/pickles
 
 mkdir output
 mkdir output/fbo_files
+mkdir output/fbo_files/nmf
 mkdir output/govwin_opportunity
+mkdir output/govwin_opportunity/nmf
 
 pip install msgpack sklearn psycopg2-binary wordcloud

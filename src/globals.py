@@ -16,6 +16,7 @@ MAX_FEATURES = 50000
 MIN_DF = 1
 MAX_DF = .66
 N_GRAMS = 1
+N_TOPICS = 66
 
 TABLE_NAME = "govwin_opportunity"
 ID_COLUMN = "opportunity_id"
@@ -69,7 +70,7 @@ def debug(text, level = 0):
 
 def get_command_line_options():
 
-    global DEBUG_LEVEL, VECTORIZER_MODEL_PICKLING, TOPIC_MODEL_PICKLING, CORPUS_PICKLING, DOC_BUFFER_SIZE, MAX_FEATURES, MIN_DF, MAX_DF, N_GRAMS, TEXT_COLUMN_MIN_LENGTH, TABLE_NAME, ID_COLUMN, TEXT_COLUMN, STRIP_HTML
+    global DEBUG_LEVEL, VECTORIZER_MODEL_PICKLING, TOPIC_MODEL_PICKLING, CORPUS_PICKLING, DOC_BUFFER_SIZE, MAX_FEATURES, MIN_DF, MAX_DF, N_GRAMS, TEXT_COLUMN_MIN_LENGTH, TABLE_NAME, ID_COLUMN, TEXT_COLUMN, STRIP_HTML, N_TOPICS
 
     import argparse
 
@@ -78,6 +79,7 @@ def get_command_line_options():
     parser.add_argument("--table-name", help="The table to use for database queries (default = \"govwin_opportunity\")")
     parser.add_argument("--id-column", help="The column to use for the document IDs in database queries (default = \"opportunity_id\")")
     parser.add_argument("--text-column", help="The column to use for the document text in database queries (default = \"program_description\")")
+    parser.add_argument("-t", "--topics", type=int, help="The number of topics to extract.")
     parser.add_argument("--min-doc-length", type=int, help="The minimum character length of the text column in database queries (default = 100)")
     parser.add_argument("--strip-html", action="store_true", help="Whether or not to strip HTML from the text column (default = False)")
     parser.add_argument("--vectorizer-pickling", type=int, choices=[0, 1], help="Whether or not to load cached vectorizer models (default = True)")
@@ -98,6 +100,8 @@ def get_command_line_options():
         ID_COLUMN = args.id_column
     if args.text_column:
         TEXT_COLUMN = args.text_column
+    if args.topics:
+        N_TOPICS = args.topics
     if args.strip_html:
         STRIP_HTML = args.strip_html
     if args.vectorizer_pickling:

@@ -64,7 +64,7 @@ def plot_results(min_topics, max_topics, costs, intertopic_similarities, interdo
 
     plt.suptitle(f"n_topics ({shape[0]} docs, {shape[1]} features, {g.N_GRAMS} n-grams) [{time}]")
     # plt.tight_layout()
-    plt.savefig(f"../output/{g.TABLE_NAME}/n_topics_nmf.png")
+    plt.savefig(f"../output/{g.TABLE_NAME}/nmf/n_topics_nmf.png")
     # plt.show()
 
 
