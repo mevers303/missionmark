@@ -36,7 +36,7 @@ def get_connection():
 
 
 
-def get_n_docs():
+def get_n_docs(table_name, id_column, text_column):
 
     conn = get_connection()
     g.debug("Loading corpus...")
@@ -62,7 +62,7 @@ def get_n_docs():
 def cache_corpus(table_name, id_column, text_column, remove_html=False):
 
     conn = get_connection()
-    n_docs = get_n_docs()
+    n_docs = get_n_docs(table_name, id_column, text_column)
 
 
     corpus_cached_ids = get_cached_doc_ids(table_name)
@@ -102,7 +102,7 @@ def cache_corpus(table_name, id_column, text_column, remove_html=False):
 def get_db_corpus(table_name, id_column, text_column, remove_html=False):
 
     conn = get_connection()
-    n_docs = get_n_docs()
+    n_docs = get_n_docs(table_name, id_column, text_column)
 
 
     with conn.cursor(name="doc_getter") as cursor:
@@ -136,7 +136,7 @@ def get_db_corpus(table_name, id_column, text_column, remove_html=False):
 def get_cached_filenames(table_name):
 
     g.debug("Searching for cached documents...")
-    corpus_df = pd.DataFrame(columns="file")
+    corpus_df = pd.DataFrame(columns=["file"])
 
     for file in os.listdir(f"../data/{table_name}/docs/"):
         if not file.endswith(".txt"):
@@ -195,5 +195,5 @@ def strip_html(doc):
 
 if __name__ == "__main__":
 
-    # cache_corpus("govwin_opportunity", "opportunity_id", "program_description", remove_html=True)
-    cache_corpus("fbo_files", "id", "text", remove_html=False)
+    cache_corpus("govwin_opportunity", "opportunity_id", "program_description", remove_html=True)
+    # cache_corpus("fbo_files", "id", "text", remove_html=False)

@@ -80,7 +80,7 @@ def main():
     time_start = time.time()
     costs, intertopic_similarities, interdocument_similarities = search_models(tfidf_corpus_df, min_topics, max_topics, g.TABLE_NAME)
     time_dif = datetime.timedelta(seconds=round(time.time() - time_start))
-    plot_results(min_topics, max_topics, costs, intertopic_similarities, interdocument_similarities, time_dif, tfidf_corpus.shape)
+    plot_results(min_topics, max_topics, costs, intertopic_similarities, interdocument_similarities, time_dif, tfidf_corpus_df.shape)
 
 
 if __name__ == "__main__":

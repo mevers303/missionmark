@@ -74,7 +74,7 @@ def count_vectorize(corpus_df, table_name, model_from_pickle, input_type="conten
     else:
         g.debug("Vectorizing documents...")
         count_vectorizer = CountVectorizerProgressBar(input=input_type, max_features=g.MAX_FEATURES, min_df=g.MIN_DF, max_df=g.MAX_DF, stop_words=get_stopwords(), tokenizer=tokenize, ngram_range=(1, g.N_GRAMS), strip_accents="ascii", dtype=np.uint16, progress_bar_clear=True)
-        cv_corpus_df = pd.DataFrame(data=count_vectorizer.fit_transform(corpus_df.values[:, 0]), index=corpus_df.index)
+        cv_corpus_df = pd.DataFrame(data=count_vectorizer.fit_transform(corpus_df.values[:, 0]).A, index=corpus_df.index)
         cv_corpus_df.columns = count_vectorizer.get_feature_names()
         count_vectorizer.stop_words_ = None  # we can delete this to take up less memory (useful for pickling)
         g.debug(" -> Done!", 1)
@@ -84,7 +84,7 @@ def count_vectorize(corpus_df, table_name, model_from_pickle, input_type="conten
 
     if cv_corpus_df is None:
         g.debug("Transforming corpus...")
-        cv_corpus_df = pd.DataFrame(data=count_vectorizer.transform(corpus_df.values[:, 0]), index=corpus_df.index, columns=count_vectorizer.get_feature_names())
+        cv_corpus_df = pd.DataFrame(data=count_vectorizer.transform(corpus_df.values[:, 0]).A, index=corpus_df.index, columns=count_vectorizer.get_feature_names())
         g.debug(" -> Done!", 1)
 
 
@@ -104,13 +104,13 @@ def cv_to_tfidf(cv_corpus_df, table_name, model_from_pickle):
     else:
         g.debug("Transforming to TF-IDF vector...")
         tfidf_transformer = TfidfTransformer(sublinear_tf=True)
-        tfidf_corpus_df = pd.DataFrame(data=tfidf_transformer.fit_transform(cv_corpus_df.values), index=cv_corpus_df.index, columns=cv_corpus_df.columns)
+        tfidf_corpus_df = pd.DataFrame(data=tfidf_transformer.fit_transform(cv_corpus_df.values).A, index=cv_corpus_df.index, columns=cv_corpus_df.columns)
         g.debug(" -> Done!", 1)
 
 
     if tfidf_corpus_df is None:
         g.debug("Transforming corpus to TF-IDF...")
-        tfidf_corpus_df = pd.DataFrame(data=tfidf_transformer.transform(cv_corpus_df.values), index=cv_corpus_df.index, columns=cv_corpus_df.columns)
+        tfidf_corpus_df = pd.DataFrame(data=tfidf_transformer.transform(cv_corpus_df.values).A, index=cv_corpus_df.index, columns=cv_corpus_df.columns)
         g.debug(" -> Done!", 1)
 
 
