@@ -17,6 +17,7 @@ from nltk.stem.porter import PorterStemmer as Stemmer
 
 import numpy as np
 import os
+import pandas as pd
 
 
 
@@ -56,17 +57,16 @@ def get_cached_corpus(table_name, name):
 
 
 
-def cache_corpus(doc_ids, corpus, table_name, name):
+def cache_corpus(corpus_df, table_name, name):
 
-    dump_doc_ids(doc_ids, f"../data/{table_name}/pickles/{name}_doc_ids.txt")
-    pickle_dump(corpus, f"../data/{table_name}/pickles/{name}_corpus.pkl")
-
+    pickle_dump(corpus_df, f"../data/{table_name}/pickles/{name}_corpus.pkl")
 
 
 
-def count_vectorize(corpus, table_name, model_from_pickle, input_type="content"):
 
-    cv_corpus = None
+def count_vectorize(corpus_df, table_name, model_from_pickle, input_type="content"):
+    # TODO find all usages
+    cv_corpus_df = None
 
 
     if model_from_pickle and os.path.exists(f"../data/{table_name}/pickles/CountVectorizer.pkl"):
@@ -75,36 +75,28 @@ def count_vectorize(corpus, table_name, model_from_pickle, input_type="content")
     else:
         g.debug("Vectorizing documents...")
         count_vectorizer = CountVectorizerProgressBar(input=input_type, max_features=g.MAX_FEATURES, min_df=g.MIN_DF, max_df=g.MAX_DF, stop_words=get_stopwords(), tokenizer=tokenize, ngram_range=(1, g.N_GRAMS), strip_accents="ascii", dtype=np.uint16, progress_bar_clear=True)
-        cv_corpus = count_vectorizer.fit_transform(corpus)
+        cv_corpus_df = pd.DataFrame(data=count_vectorizer.fit_transform(corpus_df.values[:, 0]), index=corpus_df.index)
+        cv_corpus_df.columns = count_vectorizer.get_feature_names()
         count_vectorizer.stop_words_ = None  # we can delete this to take up less memory (useful for pickling)
         g.debug(" -> Done!", 1)
 
     g.debug(f" -> Loaded vectorizer with {len(count_vectorizer.get_feature_names())} features!", 1)
 
 
-    if cv_corpus is None:
+    if cv_corpus_df is None:
         g.debug("Transforming corpus...")
-        cv_corpus = count_vectorizer.transform(corpus)
+        cv_corpus_df = pd.DataFrame(data=count_vectorizer.transform(corpus_df.values[:, 0]), index=corpus_df.index, columns=count_vectorizer.get_feature_names())
         g.debug(" -> Done!", 1)
 
 
-    g.debug(f" -> Loaded {cv_corpus.shape[0]} documents with {cv_corpus.shape[1]} features!", 1)
-    return count_vectorizer, cv_corpus
+    g.debug(f" -> Loaded {cv_corpus_df.shape[0]} documents with {cv_corpus_df.shape[1]} features!", 1)
+    return count_vectorizer, cv_corpus_df
 
 
-def count_vectorize_cache(table_name):
 
-    corpus_filenames, n_docs = get_cached_filenames(table_name)
-    doc_ids = [file[:-4] for file in corpus_filenames]
-
-    count_vectorizer, doc_ids, cv_corpus = count_vectorize(doc_ids, corpus_filenames, table_name, input_type="filename")
-
-    return count_vectorizer, doc_ids, cv_corpus
-
-
-def cv_to_tfidf(cv_corpus, table_name, model_from_pickle):
-
-    tfidf_corpus = None
+def cv_to_tfidf(cv_corpus_df, table_name, model_from_pickle):
+    # TODO find all usages
+    tfidf_corpus_df = None
 
 
     if model_from_pickle and os.path.exists(f"../data/{table_name}/pickles/TfidfTransformer.pkl"):
@@ -113,18 +105,18 @@ def cv_to_tfidf(cv_corpus, table_name, model_from_pickle):
     else:
         g.debug("Transforming to TF-IDF vector...")
         tfidf_transformer = TfidfTransformer(sublinear_tf=True)
-        tfidf_corpus = tfidf_transformer.fit_transform(cv_corpus)
+        tfidf_corpus_df = pd.DataFrame(data=tfidf_transformer.fit_transform(cv_corpus_df.values), index=cv_corpus_df.index, columns=cv_corpus_df.columns)
         g.debug(" -> Done!", 1)
 
 
-    if tfidf_corpus is None:
+    if tfidf_corpus_df is None:
         g.debug("Transforming corpus to TF-IDF...")
-        tfidf_corpus = tfidf_transformer.transform(cv_corpus)
+        tfidf_corpus_df = pd.DataFrame(data=tfidf_transformer.transform(cv_corpus_df.values), index=cv_corpus_df.index, columns=cv_corpus_df.columns)
         g.debug(" -> Done!", 1)
 
 
-    g.debug(f" -> {tfidf_corpus.shape[0]} count vectors with {tfidf_corpus.shape[1]} features transformed!", 1)
-    return tfidf_transformer, tfidf_corpus
+    g.debug(f" -> {tfidf_corpus_df.shape[0]} vectors with {tfidf_corpus_df.shape[1]} features transformed to TF-IDF!", 1)
+    return tfidf_transformer, tfidf_corpus_df
 
 
 
@@ -162,18 +154,18 @@ def get_features(table_name):
 
 
 
-def build_model_and_corpus_cache(doc_ids, corpus, table_name, input_type="content"):
+def build_model_and_corpus_cache(corpus_df, table_name, input_type="content"):
 
-    cv_model, cv_corpus = count_vectorize(corpus, table_name, False, input_type)
+    cv_model, cv_corpus_df = count_vectorize(corpus_df, table_name, False, input_type)
     pickle_dump(cv_model, f"../data/{table_name}/pickles/CountVectorizer.pkl")
     dump_features(cv_model.get_feature_names(), table_name)
-    cache_corpus(doc_ids, cv_corpus, table_name, "cv")
+    cache_corpus(cv_corpus_df, table_name, "cv")
 
     del cv_model  # save some memory
-    tfidf_model, tfidf_corpus = cv_to_tfidf(cv_corpus, table_name, False)
-    del cv_corpus  # save some memory
+    tfidf_model, tfidf_corpus = cv_to_tfidf(cv_corpus_df, table_name, False)
+    del cv_corpus_df  # save some memory
     pickle_dump(tfidf_model, f"../data/{table_name}/pickles/TfidfTransformer.pkl")
-    cache_corpus(doc_ids, tfidf_corpus, table_name, "tfidf")
+    cache_corpus(tfidf_corpus, table_name, "tfidf")
 
     print("Done!")
 
@@ -183,8 +175,8 @@ def main():
 
     g.get_command_line_options()
 
-    doc_ids, corpus = get_db_corpus(g.TABLE_NAME, g.ID_COLUMN, g.TEXT_COLUMN, remove_html=g.STRIP_HTML)
-    build_model_and_corpus_cache(doc_ids, corpus, g.TABLE_NAME)
+    corpus_df = get_db_corpus(g.TABLE_NAME, g.ID_COLUMN, g.TEXT_COLUMN, remove_html=g.STRIP_HTML)
+    build_model_and_corpus_cache(corpus_df, g.TABLE_NAME)
 
 
 if __name__ == "__main__":

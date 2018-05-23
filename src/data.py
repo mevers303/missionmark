@@ -5,10 +5,11 @@
 
 import os
 import psycopg2
+import pandas as pd
 from bs4 import BeautifulSoup
 from bs4.element import Comment
 
-from globals import *
+import globals as g
 
 
 
@@ -20,7 +21,7 @@ def get_connection():
     global _connection
 
     if not _connection:
-        debug("Connecting to Postgres database...")
+        g.debug("Connecting to Postgres database...")
 
         with open("../missionmark_db_creds", "r") as f:
             host = f.readline()[:-1]
@@ -29,30 +30,23 @@ def get_connection():
             password = f.readline()[:-1]
 
         _connection = psycopg2.connect(host=host, dbname=dbname, user=user, password=password)
-        debug(" -> Connection successful!", 1)
+        g.debug(" -> Connection successful!", 1)
 
     return _connection
 
 
 
-
-
-def cache_corpus(table_name, id_column, text_column, remove_html=False):
+def get_n_docs():
 
     conn = get_connection()
-    debug("Loading corpus...")
-
-    corpus_cached_ids = get_cached_doc_ids(table_name)
-    n_cached = len(corpus_cached_ids)
-    debug(f" -> {n_cached} already cached...", 1)
-
+    g.debug("Loading corpus...")
 
     with conn.cursor() as cursor:
 
         q = f"""
                SELECT COUNT(*)
                FROM import.{table_name}
-               WHERE LENGTH({text_column}) > {TEXT_COLUMN_MIN_LENGTH}
+               WHERE LENGTH({text_column}) > {g.TEXT_COLUMN_MIN_LENGTH}
                  AND {id_column} IS NOT NULL
             """
 
@@ -60,14 +54,29 @@ def cache_corpus(table_name, id_column, text_column, remove_html=False):
         n_docs = cursor.fetchone()[0]
 
 
-    debug(f" -> Downloading {n_docs}...", 1)
+    g.debug(f" -> Found {n_docs}!", 1)
+    return n_docs
+
+
+
+def cache_corpus(table_name, id_column, text_column, remove_html=False):
+
+    conn = get_connection()
+    n_docs = get_n_docs()
+
+
+    corpus_cached_ids = get_cached_doc_ids(table_name)
+    n_cached = len(corpus_cached_ids)
+    g.debug(f" -> {n_cached} already cached...", 1)
+
+
     with conn.cursor(name="doc_getter") as cursor:
-        cursor.itersize = DOC_BUFFER_SIZE
+        cursor.itersize = g.DOC_BUFFER_SIZE
 
         q = f"""
                 SELECT {id_column}, {text_column}
                 FROM import.{table_name}
-                WHERE LENGTH({text_column}) > {TEXT_COLUMN_MIN_LENGTH}
+                WHERE LENGTH({text_column}) > {g.TEXT_COLUMN_MIN_LENGTH}
                   AND {id_column} IS NOT NULL
              """
 
@@ -83,65 +92,61 @@ def cache_corpus(table_name, id_column, text_column, remove_html=False):
                     f.write(doc)
 
             completed += 1
-            progress_bar(completed, n_docs, 1)
+            g.progress_bar(completed, n_docs, 1)
 
 
-        debug(f" -> {n_docs} documents cached!", 1)
+        g.debug(f" -> {n_docs} documents cached!", 1)
 
 
 
 def get_db_corpus(table_name, id_column, text_column, remove_html=False):
 
     conn = get_connection()
-    debug("Loading corpus...")
-
-    with conn.cursor() as cursor:
-
-        q = f"""
-               SELECT COUNT(*)
-               FROM import.{table_name}
-               WHERE LENGTH({text_column}) > {TEXT_COLUMN_MIN_LENGTH}
-                 AND {id_column} IS NOT NULL
-            """
-
-        cursor.execute(q)
-        n_docs = cursor.fetchone()[0]
+    n_docs = get_n_docs()
 
 
-    debug(f" -> Downloading {n_docs}...", 1)
     with conn.cursor(name="doc_getter") as cursor:
-        cursor.itersize = DOC_BUFFER_SIZE
+        cursor.itersize = g.DOC_BUFFER_SIZE
 
         q = f"""
                 SELECT {id_column}, {text_column}
                 FROM import.{table_name}
-                WHERE LENGTH({text_column}) > {TEXT_COLUMN_MIN_LENGTH}
+                WHERE LENGTH({text_column}) > {g.TEXT_COLUMN_MIN_LENGTH}
                   AND {id_column} IS NOT NULL
              """
 
         cursor.execute(q)
-        doc_ids = []
-        corpus = []
+
+        corpus_df = pd.DataFrame(columns=["text"])
+        completed = 0
 
         for doc_id, doc in cursor:
-            if remove_html:
-                doc = strip_html(doc)
-            doc_ids.append(doc_id)
-            corpus.append(doc)
+            corpus_df.loc[doc_id] = doc if remove_html else strip_html(doc)
+            completed += 1
+            g.progress_bar(completed, n_docs, 1)
 
-    debug(f" -> {len(corpus)} documents loaded!", 1)
 
-    return doc_ids, corpus
+        g.debug(f" -> {n_docs} documents loaded!", 1)
+
+
+    return corpus_df
 
 
 
 def get_cached_filenames(table_name):
-    debug("Searching for cached documents...")
-    cached_filenames = [f"../data/{table_name}/docs/" + file for file in os.listdir(f"../data/{table_name}/docs/") if file.endswith(".txt")]
-    n_docs = len(cached_filenames)
-    debug(f" -> {n_docs} cached documents found!", 1)
 
-    return cached_filenames, n_docs
+    g.debug("Searching for cached documents...")
+    corpus_df = pd.DataFrame(columns="file")
+
+    for file in os.listdir(f"../data/{table_name}/docs/"):
+        if not file.endswith(".txt"):
+            continue
+        corpus_df.loc[file[:-4]] = f"../data/{table_name}/docs/{file}"
+
+
+    g.debug(f" -> {corpus_df.shape[0]} cached documents found!", 1)
+
+    return corpus_df
 
 
 
@@ -163,7 +168,7 @@ def load_doc_ids(filename):
 
 def check_corpus_pickles(table_name):
 
-    return CORPUS_PICKLING and \
+    return g.CORPUS_PICKLING and \
            os.path.exists(f"../data/{table_name}/pickles/TfidfTransformer.pkl") and \
            os.path.exists(f"../data/{table_name}/pickles/TfidfTransformer_corpus.pkl") and \
            os.path.exists(f"../data/{table_name}/pickles/TfidfTransformer_doc_ids.txt")

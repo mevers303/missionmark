@@ -11,12 +11,12 @@ from globals import *
 
 acronyms = {}
 
-doc_ids, corpus = get_db_corpus("govwin_opportunity", "opportunity_id", "program_description", remove_html=True)
+corpus_df = get_db_corpus("govwin_opportunity", "opportunity_id", "program_description", remove_html=True)
 completed = 0
-total = len(corpus)
+total = corpus_df.shape[0]
 
 debug("Parsing acronyms...")
-for doc in corpus:
+for doc in corpus_df.values[:, 0]:
     add_multiple_to_acronyms(acronyms, acronyms_from_doc(doc))
     completed += 1
     progress_bar(completed, total, 1)
