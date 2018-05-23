@@ -117,13 +117,13 @@ def dump_topic_corpus(corpus_topics, corpus, doc_ids):
     g.debug(f" -> {len(corpus)} files created!", 1)
 
 
-def get_tfidf_topic_weights(corpus_tfidf, corpus_topics, n_topics):
+def get_tfidf_topic_weights(tfidf_corpus_df, corpus_topics, n_topics):
 
     topic_tfidf_weights = []
 
     for topic_i in range(n_topics):
 
-        topic_corpus = corpus_tfidf[corpus_topics == topic_i]
+        topic_corpus = tfidf_corpus_df.values[corpus_topics == topic_i]
 
         topic_word_scores = topic_corpus.sum(axis=0).A1
         topic_tfidf_weights.append(topic_word_scores)
@@ -150,14 +150,14 @@ def print_tfidf_topic_words(corpus_tfidf, corpus_topics, word_list, n_topics, n_
 
 
 
-def build_word_clouds(corpus_tfidf, corpus_topics, H, word_list, table_name):
+def build_word_clouds(tfidf_corpus_df, corpus_topics, H, table_name):
 
     g.debug("Generating topic word clouds...")
     n_topics = H.shape[0]
     completed = 0
     g.progress_bar(completed, n_topics)
 
-    topic_tfidf_weights = get_tfidf_topic_weights(corpus_tfidf, corpus_topics, n_topics)
+    topic_tfidf_weights = get_tfidf_topic_weights(tfidf_corpus_df, corpus_topics, n_topics)
     topic_top_tfidf_words_i = np.argsort(topic_tfidf_weights, axis=1)[:, ::-1]
     topic_top_nmf_words_i = np.argsort(H, axis=1)[:, ::-1]
 
@@ -165,7 +165,7 @@ def build_word_clouds(corpus_tfidf, corpus_topics, H, word_list, table_name):
 
         # nmf wordcloud
         wc = WordCloud(background_color="black", max_words=666, width=2000, height=1000)
-        wc.fit_words({word_list[word_i]: H[topic_i, word_i] for word_i in topic_top_nmf_words_i[topic_i] if H[topic_i, word_i]})
+        wc.fit_words({tfidf_corpus_df.columns[word_i]: H[topic_i, word_i] for word_i in topic_top_nmf_words_i[topic_i] if H[topic_i, word_i]})
         wc.to_file(f"../output/{table_name}/nmf/{topic_i}_nmf_wordcloud.png")
 
         # an empty topic...
@@ -174,7 +174,7 @@ def build_word_clouds(corpus_tfidf, corpus_topics, H, word_list, table_name):
 
         # tf-idf wordcloud
         wc = WordCloud(background_color="black", max_words=666, width=2000, height=1000)
-        wc.fit_words({word_list[word_i]: topic_tfidf_weights[topic_i, word_i] for word_i in topic_top_tfidf_words_i[topic_i] if topic_tfidf_weights[topic_i, word_i]})
+        wc.fit_words({tfidf_corpus_df.columns[word_i]: topic_tfidf_weights[topic_i, word_i] for word_i in topic_top_tfidf_words_i[topic_i] if topic_tfidf_weights[topic_i, word_i]})
         wc.to_file(f"../output/{table_name}/nmf/{topic_i}_tfidf_wordcloud.png")
 
         completed += 1
@@ -185,7 +185,7 @@ def build_word_clouds(corpus_tfidf, corpus_topics, H, word_list, table_name):
 
 
 
-def nmf_model(corpus_tfidf, n_topics, table_name, model_from_pickle, max_iter=500, no_output=False):
+def nmf_model(tfidf_corpus_df, n_topics, table_name, model_from_pickle, max_iter=500, no_output=False):
 
     if model_from_pickle and os.path.exists(f"../data/{table_name}/pickles/NMF.pkl"):
         nmf = pickle_load(f"../data/{table_name}/pickles/NMF.pkl")
@@ -196,7 +196,7 @@ def nmf_model(corpus_tfidf, n_topics, table_name, model_from_pickle, max_iter=50
         if not no_output:
             g.debug(f"Sorting corpus into {n_topics} topics...")
         nmf = NMF(n_components=n_topics, max_iter=max_iter, random_state=666)
-        W = nmf.fit_transform(corpus_tfidf)
+        W = nmf.fit_transform(tfidf_corpus_df.values)
         H = nmf.components_
 
         if not no_output:
@@ -207,14 +207,14 @@ def nmf_model(corpus_tfidf, n_topics, table_name, model_from_pickle, max_iter=50
 
 
 
-def build_model_and_wordclouds(n_topics, tfidf_corpus, vocabulary, table_name):
+def build_model_and_wordclouds(n_topics, tfidf_corpus_df, table_name):
 
-    nmf, W, H = nmf_model(tfidf_corpus, n_topics, table_name, False)
+    nmf, W, H = nmf_model(tfidf_corpus_df, n_topics, table_name, False)
     pickle_dump(nmf, f"../data/{table_name}/pickles/NMF.pkl")
     pickle_dump(W, f"../data/{table_name}/pickles/W.pkl")
 
     corpus_topics = get_corpus_top_topics(W)
-    build_word_clouds(tfidf_corpus, corpus_topics, H, vocabulary, table_name)
+    build_word_clouds(tfidf_corpus_df, corpus_topics, H, table_name)
 
     g.debug("Done!")
 
@@ -224,10 +224,8 @@ def main():
 
     g.get_command_line_options()
 
-    doc_ids, tfidf_corpus = get_cached_corpus(g.TABLE_NAME, "tfidf")
-    vocabulary = get_features(g.TABLE_NAME)
-
-    build_model_and_wordclouds(g.N_TOPICS, tfidf_corpus, vocabulary, g.TABLE_NAME)
+    tfidf_corpus_df = get_cached_corpus(g.TABLE_NAME, "tfidf")
+    build_model_and_wordclouds(g.N_TOPICS, tfidf_corpus_df, g.TABLE_NAME)
 
 
 if __name__ == "__main__":

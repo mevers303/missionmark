@@ -48,11 +48,10 @@ def tokenize(text):
 def get_cached_corpus(table_name, name):
 
     if os.path.exists(f"../data/{table_name}/pickles/{name}_corpus.pkl") and os.path.exists(f"../data/{table_name}/pickles/{name}_doc_ids.txt"):
-        doc_ids = load_doc_ids(f"../data/{table_name}/pickles/{name}_doc_ids.txt")
-        cv_corpus = pickle_load(f"../data/{table_name}/pickles/{name}_corpus.pkl")
-        return doc_ids, cv_corpus
+        v_corpus_df = pickle_load(f"../data/{table_name}/pickles/{name}_corpus.pkl")
+        return v_corpus_df
     else:
-        return None, None
+        return None
 
 
 
@@ -65,7 +64,7 @@ def cache_corpus(corpus_df, table_name, name):
 
 
 def count_vectorize(corpus_df, table_name, model_from_pickle, input_type="content"):
-    # TODO find all usages
+
     cv_corpus_df = None
 
 
@@ -95,7 +94,7 @@ def count_vectorize(corpus_df, table_name, model_from_pickle, input_type="conten
 
 
 def cv_to_tfidf(cv_corpus_df, table_name, model_from_pickle):
-    # TODO find all usages
+
     tfidf_corpus_df = None
 
 
@@ -120,36 +119,12 @@ def cv_to_tfidf(cv_corpus_df, table_name, model_from_pickle):
 
 
 
-def tfidf_vectorize(corpus, table_name, model_from_pickle, input_type="content"):
+def tfidf_vectorize(corpus_df, table_name, model_from_pickle, input_type="content"):
 
-    count_vectorizer, cv_corpus = count_vectorize(corpus, table_name, model_from_pickle, input_type)
-    vocabulary = count_vectorizer.get_feature_names()
-    _, tfidf_corpus = cv_to_tfidf(cv_corpus, table_name, model_from_pickle)
+    count_vectorizer, cv_corpus_df = count_vectorize(corpus_df, table_name, model_from_pickle, input_type)
+    _, tfidf_corpus_df = cv_to_tfidf(cv_corpus_df, table_name, model_from_pickle)
 
-    return tfidf_corpus, vocabulary
-
-
-
-
-
-def dump_features(word_list, table_name):
-
-    g.debug("Writing word list to features.txt...")
-
-    with open(f"../data/{table_name}/pickles/features.txt", "w") as f:
-        for word in word_list:
-            f.write(word + "\n")
-
-    g.debug(f" -> Wrote {len(word_list)} to file!", 1)
-
-
-
-def get_features(table_name):
-
-    return [word[:-1] for word in open(f"../data/{table_name}/pickles/features.txt", "r")]
-
-
-
+    return tfidf_corpus_df
 
 
 
@@ -158,14 +133,13 @@ def build_model_and_corpus_cache(corpus_df, table_name, input_type="content"):
 
     cv_model, cv_corpus_df = count_vectorize(corpus_df, table_name, False, input_type)
     pickle_dump(cv_model, f"../data/{table_name}/pickles/CountVectorizer.pkl")
-    dump_features(cv_model.get_feature_names(), table_name)
     cache_corpus(cv_corpus_df, table_name, "cv")
 
     del cv_model  # save some memory
-    tfidf_model, tfidf_corpus = cv_to_tfidf(cv_corpus_df, table_name, False)
+    tfidf_model, tfidf_corpus_df = cv_to_tfidf(cv_corpus_df, table_name, False)
     del cv_corpus_df  # save some memory
     pickle_dump(tfidf_model, f"../data/{table_name}/pickles/TfidfTransformer.pkl")
-    cache_corpus(tfidf_corpus, table_name, "tfidf")
+    cache_corpus(tfidf_corpus_df, table_name, "tfidf")
 
     print("Done!")
 

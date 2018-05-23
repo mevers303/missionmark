@@ -15,7 +15,7 @@ import datetime
 
 
 
-def search_models(tfidf_corpus, min_topics, max_topics, table_name):
+def search_models(tfidf_corpus_df, min_topics, max_topics, table_name):
 
     g.debug("Building NMF topics...")
     # nmf_models = []
@@ -27,13 +27,13 @@ def search_models(tfidf_corpus, min_topics, max_topics, table_name):
     g.progress_bar(0, n_models)
     for i in range(min_topics, max_topics + 1):
 
-        nmf, W, H = nmf_model(tfidf_corpus, i, table_name, False, no_output=True)
+        nmf, W, H = nmf_model(tfidf_corpus_df, i, table_name, False, no_output=True)
         top_topics = get_corpus_top_topics(W)
 
         # nmf_models.append(nmf)
         costs.append(nmf.reconstruction_err_**2)
         intertopic_similarities.append(1 - pairwise_distances(H, metric="cosine", n_jobs=-1).mean())
-        interdocument_similarities.append(np.mean([1 - pairwise_distances(tfidf_corpus[top_topics == topic_i].A, metric="cosine", n_jobs=-1).mean() for topic_i in range(i) if np.isin(topic_i, top_topics)]))
+        interdocument_similarities.append(np.mean([1 - pairwise_distances(tfidf_corpus_df.values[top_topics == topic_i].A, metric="cosine", n_jobs=-1).mean() for topic_i in range(i) if np.isin(topic_i, top_topics)]))
 
         g.progress_bar(i - min_topics + 1, n_models, text=f"{nmf.n_iter_} iterations")
 
@@ -76,9 +76,9 @@ def main():
     min_topics = 5
     max_topics = 250
 
-    doc_ids, tfidf_corpus = get_cached_corpus(g.TABLE_NAME, "tfidf")
+    tfidf_corpus_df = get_cached_corpus(g.TABLE_NAME, "tfidf")
     time_start = time.time()
-    costs, intertopic_similarities, interdocument_similarities = search_models(tfidf_corpus, min_topics, max_topics, g.TABLE_NAME)
+    costs, intertopic_similarities, interdocument_similarities = search_models(tfidf_corpus_df, min_topics, max_topics, g.TABLE_NAME)
     time_dif = datetime.timedelta(seconds=round(time.time() - time_start))
     plot_results(min_topics, max_topics, costs, intertopic_similarities, interdocument_similarities, time_dif, tfidf_corpus.shape)
 
