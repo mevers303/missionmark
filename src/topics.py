@@ -74,7 +74,7 @@ def main():
     print(g.N_GRAMS)
 
     min_topics = 5
-    max_topics = 250
+    max_topics = 160
 
     doc_ids, tfidf_corpus = get_cached_corpus(g.TABLE_NAME, "tfidf")
     time_start = time.time()
