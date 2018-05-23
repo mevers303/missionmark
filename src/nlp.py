@@ -9,7 +9,7 @@ from TfidfVectorizer import TfidfVectorizer
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 from data import get_db_corpus
 import globals as g
-from vectorizer import get_cached_corpus
+from vectorizer import get_cached_corpus, get_features
 
 from pickle_workaround import pickle_dump, pickle_load
 
@@ -150,22 +150,23 @@ def print_tfidf_topic_words(corpus_tfidf, corpus_topics, word_list, n_topics, n_
 
 
 
-def build_word_clouds(corpus_tfidf, corpus_topics, topic_nmf_weights, word_list):
+def build_word_clouds(corpus_tfidf, corpus_topics, H, word_list, table_name):
 
-    g.debug("Generating topic word clouds... (this may take a while)")
+    g.debug("Generating topic word clouds...")
+    n_topics = H.shape[0]
     completed = 0
-    g.progress_bar(completed, g.N_TOPICS)
+    g.progress_bar(completed, n_topics)
 
-    topic_tfidf_weights = get_tfidf_topic_weights(corpus_tfidf, corpus_topics, g.N_TOPICS)
+    topic_tfidf_weights = get_tfidf_topic_weights(corpus_tfidf, corpus_topics, n_topics)
     topic_top_tfidf_words_i = np.argsort(topic_tfidf_weights, axis=1)[:, ::-1]
-    topic_top_nmf_words_i = np.argsort(topic_nmf_weights, axis=1)[:, ::-1]
+    topic_top_nmf_words_i = np.argsort(H, axis=1)[:, ::-1]
 
-    for topic_i in range(g.N_TOPICS):
+    for topic_i in range(n_topics):
 
         # nmf wordcloud
         wc = WordCloud(background_color="black", max_words=666, width=2000, height=1000)
-        wc.fit_words({word_list[word_i]: topic_nmf_weights[topic_i, word_i] for word_i in topic_top_nmf_words_i[topic_i] if topic_nmf_weights[topic_i, word_i]})
-        wc.to_file(f"../output/{g.TABLE_NAME}/nmf/nmf_{topic_i}_wordcloud.png")
+        wc.fit_words({word_list[word_i]: H[topic_i, word_i] for word_i in topic_top_nmf_words_i[topic_i] if H[topic_i, word_i]})
+        wc.to_file(f"../output/{table_name}/nmf/{topic_i}_nmf_wordcloud.png")
 
         # an empty topic...
         if not topic_tfidf_weights[topic_i].sum():
@@ -174,39 +175,26 @@ def build_word_clouds(corpus_tfidf, corpus_topics, topic_nmf_weights, word_list)
         # tf-idf wordcloud
         wc = WordCloud(background_color="black", max_words=666, width=2000, height=1000)
         wc.fit_words({word_list[word_i]: topic_tfidf_weights[topic_i, word_i] for word_i in topic_top_tfidf_words_i[topic_i] if topic_tfidf_weights[topic_i, word_i]})
-        wc.to_file(f"../output/{g.TABLE_NAME}/nmf/tf-idf_{topic_i}_wordcloud.png")
+        wc.to_file(f"../output/{table_name}/nmf/{topic_i}_tfidf_wordcloud.png")
 
         completed += 1
-        g.progress_bar(completed, g.N_TOPICS)
+        g.progress_bar(completed, n_topics)
 
-    g.debug(f" -> {n_topics} word clouds generated!")
-
-
-
-
-def dump_features(word_list):
-
-    g.debug("Writing word list to features.txt...")
-
-    with open("features.txt", "w") as f:
-        for word in word_list:
-            f.write(word + "\n")
-
-    g.debug(f" -> Wrote {len(word_list)} to file!")
+    g.debug(f" -> {n_topics} word clouds generated!", 1)
 
 
 
 
-def nmf_model(corpus_tfidf, n_topics, model_from_pickle, max_iter=500, no_output=False):
+def nmf_model(corpus_tfidf, n_topics, table_name, model_from_pickle, max_iter=500, no_output=False):
 
-    if model_from_pickle and os.path.exists(f"../data/{g.TABLE_NAME}/pickles/NMF.pkl"):
-        nmf = pickle_load(f"../data/{g.TABLE_NAME}/pickles/NMF.pkl")
-        W = pickle_load(f"../data/{g.TABLE_NAME}/pickles/NMF_W.pkl")
+    if model_from_pickle and os.path.exists(f"../data/{table_name}/pickles/NMF.pkl"):
+        nmf = pickle_load(f"../data/{table_name}/pickles/NMF.pkl")
+        W = pickle_load(f"../data/{table_name}/pickles/NMF_W.pkl")
         H = nmf.components_
 
     else:
         if not no_output:
-            g.debug("Sorting corpus into topics...")
+            g.debug(f"Sorting corpus into {n_topics} topics...")
         nmf = NMF(n_components=n_topics, max_iter=max_iter, random_state=666)
         W = nmf.fit_transform(corpus_tfidf)
         H = nmf.components_
@@ -215,30 +203,31 @@ def nmf_model(corpus_tfidf, n_topics, model_from_pickle, max_iter=500, no_output
             g.debug(f" -> {nmf.n_iter_} iterations completed!", 1)
 
 
-    if not no_output:
-        g.debug(f" -> {n_topics} topics sorted!", 1)
     return nmf, W, H
 
 
 
-def build_model_and_wordclouds(tfidf_corpus, vocabulary):
+def build_model_and_wordclouds(tfidf_corpus, vocabulary, table_name):
 
-    nmf, W, H = nmf_model(tfidf_corpus, g.N_TOPICS, g.TOPIC_MODEL_PICKLING)
-    pickle_dump(nmf, f"../data/{g.TABLE_NAME}/pickles/NMF.pkl")
-    pickle_dump(W, f"../data/{g.TABLE_NAME}/pickles/W.pkl")
+    nmf, W, H = nmf_model(tfidf_corpus, g.N_TOPICS, table_name, False)
+    pickle_dump(nmf, f"../data/{table_name}/pickles/NMF.pkl")
+    pickle_dump(W, f"../data/{table_name}/pickles/W.pkl")
 
     corpus_topics = get_corpus_top_topics(W)
-    build_word_clouds(tfidf_corpus, corpus_topics, H, vocabulary)
+    build_word_clouds(tfidf_corpus, corpus_topics, H, vocabulary, table_name)
 
     g.debug("Done!")
 
 
 
 def main():
-    doc_ids, tfidf_corpus = get_cached_corpus(g.TABLE_NAME, "tfidf")
-    vocabulary = pickle_load(f"../data/{g.TABLE_NAME}/pickles/CountVectorizer.pkl").get_feature_names()
 
-    build_model_and_wordclouds(tfidf_corpus, vocabulary)
+    g.get_command_line_options()
+
+    doc_ids, tfidf_corpus = get_cached_corpus(g.TABLE_NAME, "tfidf")
+    vocabulary = get_features(g.TABLE_NAME)
+
+    build_model_and_wordclouds(tfidf_corpus, vocabulary, g.TABLE_NAME)
 
 
 if __name__ == "__main__":

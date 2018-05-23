@@ -140,10 +140,33 @@ def tfidf_vectorize(corpus, table_name, model_from_pickle, input_type="content")
 
 
 
+def dump_features(word_list, table_name):
+
+    g.debug("Writing word list to features.txt...")
+
+    with open(f"../data/{table_name}/pickles/features.txt", "w") as f:
+        for word in word_list:
+            f.write(word + "\n")
+
+    g.debug(f" -> Wrote {len(word_list)} to file!", 1)
+
+
+
+def get_features(table_name):
+
+    return [word[:-1] for word in open(f"../data/{table_name}/pickles/features.txt", "r")]
+
+
+
+
+
+
+
 def build_model_and_corpus_cache(doc_ids, corpus, table_name, input_type="content"):
 
     cv_model, cv_corpus = count_vectorize(corpus, table_name, False, input_type)
     pickle_dump(cv_model, f"../data/{table_name}/pickles/CountVectorizer.pkl")
+    dump_features(cv_model.get_feature_names(), table_name)
     cache_corpus(doc_ids, cv_corpus, table_name, "cv")
 
     del cv_model  # save some memory
@@ -157,6 +180,8 @@ def build_model_and_corpus_cache(doc_ids, corpus, table_name, input_type="conten
 
 
 def main():
+
+    g.get_command_line_options()
 
     doc_ids, corpus = get_db_corpus(g.TABLE_NAME, g.ID_COLUMN, g.TEXT_COLUMN, remove_html=g.STRIP_HTML)
     build_model_and_corpus_cache(doc_ids, corpus, g.TABLE_NAME)

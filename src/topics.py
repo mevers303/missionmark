@@ -15,7 +15,7 @@ import datetime
 
 
 
-def search_models(tfidf_corpus, min_topics, max_topics):
+def search_models(tfidf_corpus, min_topics, max_topics, table_name):
 
     g.debug("Building NMF topics...")
     # nmf_models = []
@@ -27,7 +27,7 @@ def search_models(tfidf_corpus, min_topics, max_topics):
     g.progress_bar(0, n_models)
     for i in range(min_topics, max_topics + 1):
 
-        nmf, W, H = nmf_model(tfidf_corpus, i, "", False, no_output=True)
+        nmf, W, H = nmf_model(tfidf_corpus, i, table_name, False, no_output=True)
         top_topics = get_corpus_top_topics(W)
 
         # nmf_models.append(nmf)
@@ -78,7 +78,7 @@ def main():
 
     doc_ids, tfidf_corpus = get_cached_corpus(g.TABLE_NAME, "tfidf")
     time_start = time.time()
-    costs, intertopic_similarities, interdocument_similarities = search_models(tfidf_corpus, min_topics, max_topics)
+    costs, intertopic_similarities, interdocument_similarities = search_models(tfidf_corpus, min_topics, max_topics, g.TABLE_NAME)
     time_dif = datetime.timedelta(seconds=round(time.time() - time_start))
     plot_results(min_topics, max_topics, costs, intertopic_similarities, interdocument_similarities, time_dif, tfidf_corpus.shape)
 
