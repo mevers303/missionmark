@@ -8,7 +8,7 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer, Tf
 from progress_bar_vetorizers import CountVectorizerProgressBar
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 from data import get_cached_filenames, dump_doc_ids, load_doc_ids, get_db_corpus
-from globals import *
+import globals as g
 
 from pickle_workaround import pickle_dump, pickle_load
 
@@ -73,22 +73,22 @@ def count_vectorize(corpus, table_name, model_from_pickle, input_type="content")
         count_vectorizer = pickle_load(f"../data/{table_name}/pickles/CountVectorizer.pkl")
 
     else:
-        debug("Vectorizing documents...")
-        count_vectorizer = CountVectorizerProgressBar(input=input_type, max_features=MAX_FEATURES, min_df=MIN_DF, max_df=MAX_DF, stop_words=get_stopwords(), tokenizer=tokenize, ngram_range=(1, N_GRAMS), strip_accents="ascii", dtype=np.uint16, progress_bar_clear=True)
+        g.debug("Vectorizing documents...")
+        count_vectorizer = CountVectorizerProgressBar(input=input_type, max_features=g.MAX_FEATURES, min_df=g.MIN_DF, max_df=g.MAX_DF, stop_words=get_stopwords(), tokenizer=tokenize, ngram_range=(1, g.N_GRAMS), strip_accents="ascii", dtype=np.uint16, progress_bar_clear=True)
         cv_corpus = count_vectorizer.fit_transform(corpus)
         count_vectorizer.stop_words_ = None  # we can delete this to take up less memory (useful for pickling)
-        debug(" -> Done!", 1)
+        g.debug(" -> Done!", 1)
 
-    debug(f" -> Loaded vectorizer with {len(count_vectorizer.get_feature_names())} features!", 1)
+    g.debug(f" -> Loaded vectorizer with {len(count_vectorizer.get_feature_names())} features!", 1)
 
 
     if cv_corpus is None:
-        debug("Transforming corpus...")
+        g.debug("Transforming corpus...")
         cv_corpus = count_vectorizer.transform(corpus)
-        debug(" -> Done!", 1)
+        g.debug(" -> Done!", 1)
 
 
-    debug(f" -> Loaded {cv_corpus.shape[0]} documents with {cv_corpus.shape[1]} features!", 1)
+    g.debug(f" -> Loaded {cv_corpus.shape[0]} documents with {cv_corpus.shape[1]} features!", 1)
     return count_vectorizer, cv_corpus
 
 
@@ -111,19 +111,19 @@ def cv_to_tfidf(cv_corpus, table_name, model_from_pickle):
         tfidf_transformer = pickle_load(f"../data/{table_name}/pickles/TfidfTransformer.pkl")
 
     else:
-        debug("Transforming to TF-IDF vector...")
+        g.debug("Transforming to TF-IDF vector...")
         tfidf_transformer = TfidfTransformer(sublinear_tf=True)
         tfidf_corpus = tfidf_transformer.fit_transform(cv_corpus)
-        debug(" -> Done!", 1)
+        g.debug(" -> Done!", 1)
 
 
     if tfidf_corpus is None:
-        debug("Transforming corpus to TF-IDF...")
+        g.debug("Transforming corpus to TF-IDF...")
         tfidf_corpus = tfidf_transformer.transform(cv_corpus)
-        debug(" -> Done!", 1)
+        g.debug(" -> Done!", 1)
 
 
-    debug(f" -> {tfidf_corpus.shape[0]} count vectors with {tfidf_corpus.shape[1]} features transformed!", 1)
+    g.debug(f" -> {tfidf_corpus.shape[0]} count vectors with {tfidf_corpus.shape[1]} features transformed!", 1)
     return tfidf_transformer, tfidf_corpus
 
 
@@ -158,8 +158,8 @@ def build_model_and_corpus_cache(doc_ids, corpus, table_name, input_type="conten
 
 def main():
 
-    doc_ids, corpus = get_db_corpus(TABLE_NAME, ID_COLUMN, TEXT_COLUMN, remove_html=STRIP_HTML)
-    build_model_and_corpus_cache(doc_ids, corpus, TABLE_NAME)
+    doc_ids, corpus = get_db_corpus(g.TABLE_NAME, g.ID_COLUMN, g.TEXT_COLUMN, remove_html=g.STRIP_HTML)
+    build_model_and_corpus_cache(doc_ids, corpus, g.TABLE_NAME)
 
 
 if __name__ == "__main__":
