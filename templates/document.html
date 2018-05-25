@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <title>Results for {{ doc_id }}</title>
+    </head>
+
+    <body>
+
+        <h1>Results for {{ doc_id }}</h1>
+
+        <div>
+            <h2>Summary</h2>
+            <p>{{ summary }}</p>
+        </div>
+
+        <div>
+            <h2>Topic Modeling</h2>
+            <h3>Percentages by topic</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <td>ID</td>
+                        {% for topic_i in range(topic_result.shape[0]) %}
+                            <td>Topic #{{ topic_i + 1 }}</td>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{{ doc_id }}</td>
+                        {% for topic_weight in topic_result %}
+                            <td>{{ "%.2f"|format(topic_weight * 100) }}%</td>
+                        {% endfor %}
+                    </tr>
+                </tbody>
+            </table>
+            <h3>Percentages by document</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <td>ID</td>
+                        {% for topic_i in range(doc_result.shape[0]) %}
+                            <td>Topic #{{ topic_i + 1 }}</td>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{{ doc_id }}</td>
+                        {% for topic_weight in doc_result %}
+                            <td>{{ "%.2f"|format(topic_weight * 100) }}%</td>
+                        {% endfor %}
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div>
+            <h2>Full Text</h2>
+            {% for line in doc.split("\n") %}
+                <p>{{ line }}</p>
+            {% endfor %}
+        </div>
+
+    </body>
+</html>

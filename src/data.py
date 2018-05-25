@@ -15,14 +15,14 @@ from globals import *
 
 _connection = None
 
-def get_connection():
+def get_connection(credentials_path="../missionmark_db_creds"):
 
     global _connection
 
     if not _connection:
         debug("Connecting to Postgres database...")
 
-        with open("../missionmark_db_creds", "r") as f:
+        with open(credentials_path, "r") as f:
             host = f.readline()[:-1]
             dbname = f.readline()[:-1]
             user = f.readline()[:-1]
@@ -83,7 +83,7 @@ def cache_corpus(table_name, id_column, text_column, remove_html=False):
                     f.write(doc)
 
             completed += 1
-            progress_bar(completed, n_docs, 1)
+            progress_bar(completed, n_docs)
 
 
         debug(f" -> {n_docs} documents cached!", 1)
@@ -123,13 +123,42 @@ def get_db_corpus(table_name, id_column, text_column, remove_html=False):
         doc_ids = []
         corpus = []
 
+        completed = 0
         for doc_id, doc in cursor:
             if remove_html:
                 doc = strip_html(doc)
             doc_ids.append(doc_id)
             corpus.append(doc)
 
+            completed += 1
+            progress_bar(completed, n_docs)
+
+
     debug(f" -> {len(corpus)} documents loaded!", 1)
+
+    return doc_ids, corpus
+
+
+
+def get_query_corpus(query, remove_html):
+
+    conn = get_connection("missionmark_db_creds")
+    debug("Loading corpus...")
+
+    with conn.cursor(name="doc_getter") as cursor:
+        cursor.itersize = DOC_BUFFER_SIZE
+
+        cursor.execute(query)
+        doc_ids = []
+        corpus = []
+
+        for doc_id, doc in cursor:
+            if remove_html:
+                doc = strip_html(doc)
+            doc_ids.append(doc_id)
+            corpus.append(doc)
+
+    debug(f" -> {len(doc_ids)} documents loaded!", 1)
 
     return doc_ids, corpus
 

@@ -1,0 +1,5 @@
+SELECT id, text
+FROM import.fbo_files
+WHERE LENGTH(text) > 2000
+LIMIT 25
+OFFSET 1000;

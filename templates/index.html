@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MissionMark Document Sorter</title>
+</head>
+<body>
+
+    <div>
+        <h2>Topic Model Browser</h2>
+        <p>Enter a query below to view the results from the pre-built topic model.</p>
+        <ul>
+            <li>It must return two columns: the document ID and the document text.</li>
+            <li>Check the "Strip HTML" box if the document text contains any HTML tags.</li>
+        </ul>
+        <form action="/" method="POST" enctype="multipart/form-data">
+            <textarea rows="10" cols="120" id="query" name="query">{{ query }}</textarea>
+            <br />
+            Strip HTML: <input type="checkbox" name="strip_html" value="1" {% if strip_html %}checked="checked" {% endif %}/>
+            <br />
+            <input type="submit" value="Submit" />
+        </form>
+    </div>
+
+    {% if results.shape[0] %}
+        <br />
+        <br />
+
+        <div>
+
+            <form action="/" method="GET" enctype="multipart/form-data">
+                Display percentages by:<br />
+                <input type="radio" name="percentages" value="topic" onclick="this.form.submit()" {% if percentages == "topic" %}checked="checked" {% endif %}/> Topic<br />
+                <input type="radio" name="percentages" value="doc" onclick="this.form.submit()" {% if percentages == "doc" %}checked="checked" {% endif %}/> Document<br />
+            </form>
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <td>ID</td>
+                        {% for topic_i in range(results.shape[1]) %}
+                            <td>Topic #{{ topic_i + 1 }}</td>
+                        {% endfor %}
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for doc_id, result in zip(doc_ids, results) %}
+                        <tr>
+                            <td><a href="/document.html?doc_id={{ doc_id }}">{{ doc_id }}</a></td>
+                            {% for topic_weight in result %}
+                                <td>{{ "%.2f"|format(topic_weight * 100) }}%</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+
+        </div>
+    {% endif %}
+
+</body>
+</html>
