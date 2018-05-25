@@ -23,7 +23,7 @@
                     <tr>
                         <td>ID</td>
                         {% for topic_i in range(topic_result.shape[0]) %}
-                            <td>Topic #{{ topic_i + 1 }}</td>
+                            <td>Topic {{ topic_i }}</td>
                         {% endfor %}
                     </tr>
                 </thead>
@@ -42,7 +42,7 @@
                     <tr>
                         <td>ID</td>
                         {% for topic_i in range(doc_result.shape[0]) %}
-                            <td>Topic #{{ topic_i + 1 }}</td>
+                            <td>Topic {{ topic_i }}</td>
                         {% endfor %}
                     </tr>
                 </thead>
@@ -54,6 +54,16 @@
                         {% endfor %}
                     </tr>
                 </tbody>
+            </table>
+            <h3>Top 4 topic wordclouds</h3>
+            <table>
+                {% for topic_i in top_topics %}
+                    <tr>
+                        <td>#{{ loop.index }} ({{ "%.2f"|format(topic_result[topic_i] * 100) }}%)</td>
+                        <td><a href="static/wordclouds/{{ topic_i }}_nmf_wordcloud.png"><img src="static/wordclouds/{{ topic_i }}_nmf_wordcloud.png" style="max-width: 600px; max-height: 300px" /></a></td>
+                        <td><a href="static/wordclouds/{{ topic_i }}_tfidf_wordcloud.png"><img src="static/wordclouds/{{ topic_i }}_tfidf_wordcloud.png" style="max-width: 600px; max-height: 300px" /></a></td>
+                    </tr>
+                {% endfor %}
             </table>
         </div>
 

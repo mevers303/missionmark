@@ -5,19 +5,14 @@
 
 
 from sklearn.decomposition import NMF
-from TfidfVectorizer import TfidfVectorizer
-from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
-from data import get_db_corpus
 import globals as g
 from vectorizer import get_cached_corpus, get_features
 
 from pickle_workaround import pickle_dump, pickle_load
 
-import pickle
 
 import re
 import os
-from nltk.stem.wordnet import WordNetLemmatizer as Stemmer
 
 import numpy as np
 
@@ -25,17 +20,6 @@ from wordcloud import WordCloud
 
 
 
-
-
-def split_tokens_hard(text):
-    """
-    Splits into tokens based on any character that is NOT a letter, number, "-", or ".".
-    :param text: The text to be tokenized
-    :return: A list of tokens
-    """
-    # return [token for token in re.split(r"[^a-zA-Z0-9\-\.]+|[\-\.]{3,}|\s[\-\.]+|[\-\.]+\s", text) if token]  # list comprehension removes empty strings
-    # return [token for token in re.split(r"[^a-zA-Z0-9]+", text) if token]  # list comprehension removes empty strings
-    return [token for token in re.split(r"[^a-zA-Z]+", text) if token]  # list comprehension removes empty strings
 
 
 def get_top_topic_words(H):

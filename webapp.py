@@ -90,12 +90,13 @@ def display_doc():
 
     doc = corpus_df.loc[doc_id].text
     summary = summarize_doc(doc, tfidf, 3)
+
     doc_tfidf = tfidf.transform([doc])
     topic_result = nmf.transform(doc_tfidf)[0] / W_max
     doc_result = topic_result / topic_result.sum()
+    top_topics_i = np.argsort(topic_result)[::-1][:4]
 
-
-    return render_template("document.html", doc_id=doc_id, doc=doc, summary=summary, topic_result=topic_result, doc_result=doc_result)
+    return render_template("document.html", doc_id=doc_id, doc=doc, summary=summary, topic_result=topic_result, doc_result=doc_result, top_topics=top_topics_i)
 
 
 

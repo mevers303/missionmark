@@ -1,5 +1,5 @@
-SELECT id, text
-FROM import.fbo_files
-WHERE LENGTH(text) > 2000
+SELECT opportunity_id, program_description
+FROM import.govwin_opportunity
+WHERE program_description IS NOT NULL
 LIMIT 25
 OFFSET 1000;
