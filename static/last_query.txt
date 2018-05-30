@@ -1,5 +1,4 @@
 SELECT opportunity_id, program_description
 FROM import.govwin_opportunity
-WHERE program_description IS NOT NULL
-LIMIT 25
-OFFSET 1000;
+WHERE program_description LIKE '%HVAC%'
+LIMIT 25;

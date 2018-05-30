@@ -3,6 +3,7 @@
 
     <head>
         <meta charset="UTF-8">
+        <link href="static/style.css" rel="stylesheet" title="Default Style">
         <title>Results for {{ doc_id }}</title>
     </head>
 
@@ -21,9 +22,9 @@
             <table>
                 <thead>
                     <tr>
-                        <td>ID</td>
+                        <th>ID</th>
                         {% for topic_i in range(topic_result.shape[0]) %}
-                            <td>Topic {{ topic_i }}</td>
+                            <th>Topic {{ topic_i }}</th>
                         {% endfor %}
                     </tr>
                 </thead>
@@ -40,9 +41,9 @@
             <table>
                 <thead>
                     <tr>
-                        <td>ID</td>
+                        <th>ID</th>
                         {% for topic_i in range(doc_result.shape[0]) %}
-                            <td>Topic {{ topic_i }}</td>
+                            <th>Topic {{ topic_i }}</th>
                         {% endfor %}
                     </tr>
                 </thead>
@@ -57,9 +58,15 @@
             </table>
             <h3>Top 4 topic wordclouds</h3>
             <table>
+                <thhead></thhead>
+                    <tr>
+                        <th>Topic</th>
+                        <th>NMF Wordcloud</th>
+                        <th>TF-IDF Wordcloud</th>
+                    </tr>
                 {% for topic_i in top_topics %}
                     <tr>
-                        <td>#{{ loop.index }} ({{ "%.2f"|format(topic_result[topic_i] * 100) }}%)</td>
+                        <td>Topic {{ topic_i }} ({{ "%.2f"|format(topic_result[topic_i] * 100) }}%)</td>
                         <td><a href="static/wordclouds/{{ topic_i }}_nmf_wordcloud.png"><img src="static/wordclouds/{{ topic_i }}_nmf_wordcloud.png" style="max-width: 600px; max-height: 300px" /></a></td>
                         <td><a href="static/wordclouds/{{ topic_i }}_tfidf_wordcloud.png"><img src="static/wordclouds/{{ topic_i }}_tfidf_wordcloud.png" style="max-width: 600px; max-height: 300px" /></a></td>
                     </tr>

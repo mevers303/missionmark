@@ -23,9 +23,10 @@ from summaries import summarize_doc
 query = open("static/last_query.txt", "r").read()
 strip_html = True
 corpus_df = pd.DataFrame()
-results = np.array([])
+doc_topic_df = np.array([])
 percentages = "topic"
-W_max = pickle_load("static/W.pkl").max(axis=0)
+W = pickle_load("static/W.pkl")
+W_max = W.max(axis=0)
 
 
 nmf = pickle_load("static/NMF.pkl")
@@ -39,7 +40,7 @@ def process_query(_query, _strip_html):
     tfidf_corpus = tfidf.transform(corpus)
     nmf_corpus = nmf.transform(tfidf_corpus)
 
-    return _corpus_df, nmf_corpus / W_max
+    return _corpus_df, nmf_corpus
 
 
 
@@ -55,22 +56,23 @@ app.add_template_global(zip, "zip")
 @app.route("/index.html", methods=["GET", "POST"])
 @app.route("/", methods=["GET", "POST"])
 def index():
-    global query, strip_html, corpus_df, results, percentages
+    global query, strip_html, corpus_df, doc_topic_df, percentages, W_max
 
     if "query" in request.form:
         query = request.form["query"]
         open("static/last_query.txt", "w").write(query)  # save the last query
         strip_html = "strip_html" in request.form
 
-        corpus_df, results = process_query(query, strip_html)
-        display_results = results
+        corpus_df, doc_topic_df = process_query(query, strip_html)
+        doc_topic_df = doc_topic_df / W_max
+        display_results = doc_topic_df
     else:
-        display_results = results
+        display_results = doc_topic_df
 
     if "percentages" in request.args:
         percentages = request.args["percentages"]
     if percentages == "doc":
-        display_results = results / results.sum(axis=1).reshape(-1, 1)
+        display_results = doc_topic_df / doc_topic_df.sum(axis=1).reshape(-1, 1)
 
     return render_template("index.html", query=query, strip_html=strip_html, doc_ids=corpus_df.index, percentages=percentages, results=display_results)
 

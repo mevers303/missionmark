@@ -183,6 +183,9 @@ class CountVectorizerProgressBar(CountVectorizer):
 
     def progress_bar(self):
 
+        if not self._n_docs:
+            return
+
         time_now = time.time()
         if time_now - self._progress_bar_last_time < self._progress_bar_resolution and self._completed_docs < self._n_docs:
             return

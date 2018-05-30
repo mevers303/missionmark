@@ -14,9 +14,9 @@ CORPUS_PICKLING = True
 DOC_BUFFER_SIZE = 100000
 MAX_FEATURES = 50000
 MIN_DF = 1
-MAX_DF = .66
+MAX_DF = .5
 N_GRAMS = 1
-N_TOPICS = 66
+N_TOPICS = 33
 
 TABLE_NAME = "govwin_opportunity"
 ID_COLUMN = "opportunity_id"

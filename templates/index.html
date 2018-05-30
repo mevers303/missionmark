@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <link href="static/style.css" rel="stylesheet" title="Default Style">
     <title>MissionMark Document Sorter</title>
 </head>
 <body>
@@ -38,9 +39,9 @@
 
                 <thead>
                     <tr>
-                        <td>ID</td>
+                        <th>ID</th>
                         {% for topic_i in range(results.shape[1]) %}
-                            <td>Topic #{{ topic_i + 1 }}</td>
+                            <th>Topic {{ topic_i }}</th>
                         {% endfor %}
                     </tr>
                 </thead>
