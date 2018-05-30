@@ -20,17 +20,17 @@ from summaries import summarize_doc
 
 
 # these are global variables
-query = open("static/last_query.txt", "r").read()
+query = open("output/last_query.txt", "r").read()
 strip_html = True
 corpus_df = pd.DataFrame()
 doc_topic_df = np.array([])
 percentages = "topic"
-W = pickle_load("static/W.pkl")
+W = pickle_load("output/W.pkl")
 W_max = W.max(axis=0)
 
 
-nmf = pickle_load("static/NMF.pkl")
-tfidf = TfidfVectorizer(pickle_load("static/CountVectorizer.pkl"), pickle_load("static/TfidfTransformer.pkl"))
+nmf = pickle_load("output/NMF.pkl")
+tfidf = TfidfVectorizer(pickle_load("output/CountVectorizer.pkl"), pickle_load("output/TfidfTransformer.pkl"))
 
 
 def process_query(_query, _strip_html):
@@ -60,7 +60,7 @@ def index():
 
     if "query" in request.form:
         query = request.form["query"]
-        open("static/last_query.txt", "w").write(query)  # save the last query
+        open("output/last_query.txt", "w").write(query)  # save the last query
         strip_html = "strip_html" in request.form
 
         corpus_df, doc_topic_df = process_query(query, strip_html)

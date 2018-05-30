@@ -5,3 +5,5 @@ features.txt
 data/
 missionmark_db_creds
 *__pycache__*
+static/wordclouds/
+src/ipynb_checkpoints/
