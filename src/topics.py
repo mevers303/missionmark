@@ -15,7 +15,7 @@ import datetime
 
 
 
-def search_models(tfidf_corpus, min_topics, max_topics, table_name):
+def search_models(tfidf_corpus, min_topics, max_topics, threshold=.1):
 
     g.debug("Building NMF topics...")
     # nmf_models = []
@@ -27,25 +27,31 @@ def search_models(tfidf_corpus, min_topics, max_topics, table_name):
     g.progress_bar(0, n_models)
     for i in range(min_topics, max_topics + 1):
 
-        nmf, W, H = nmf_model(tfidf_corpus, i, table_name, False, no_output=True)
-        top_topics = get_corpus_top_topics(W)
+        try:
+            nmf, W, H = nmf_model(tfidf_corpus, i, no_output=True)
 
-        # nmf_models.append(nmf)
-        costs.append(nmf.reconstruction_err_**2)
-        intertopic_similarities.append(1 - pairwise_distances(H, metric="cosine", n_jobs=-1).mean())
-        interdocument_similarities.append(np.mean([1 - pairwise_distances(tfidf_corpus[top_topics == topic_i].A, metric="cosine", n_jobs=-1).mean() for topic_i in range(i) if np.isin(topic_i, top_topics)]))
+            # nmf_models.append(nmf)
+            costs.append(nmf.reconstruction_err_**2)
+            intertopic_similarities.append(1 - pairwise_distances(H, metric="cosine", n_jobs=-1).mean())
+            interdocument_similarities.append(np.mean([1 - pairwise_distances(tfidf_corpus[W[:, topic_i].flatten() > threshold].A, metric="cosine", n_jobs=-1).mean() for topic_i in range(i) if (W[:, topic_i].flatten() > threshold).any()]))
 
-        g.progress_bar(i - min_topics + 1, n_models, text=f"{nmf.n_iter_} iterations")
+            g.progress_bar(i - min_topics + 1, n_models, text=f"{nmf.n_iter_} iterations")
+
+        except KeyboardInterrupt:
+            completed = len(interdocument_similarities)
+            costs = costs[:completed]
+            intertopic_similarities = intertopic_similarities[:completed]
+            break
 
 
     return costs, intertopic_similarities, interdocument_similarities
 
 
-def plot_results(min_topics, max_topics, costs, intertopic_similarities, interdocument_similarities, time, shape):
+def plot_results(min_topics, costs, intertopic_similarities, interdocument_similarities, time, shape):
 
     fig, axes = plt.subplots(3, 1, figsize=(30, 20))
     axes = axes.flatten()
-    x = np.arange(min_topics, max_topics + 1)
+    x = np.arange(min_topics, min_topics + len(costs))
 
     axes[0].set_title("RSS")
     axes[0].set_xlabel("Topics")
@@ -64,23 +70,23 @@ def plot_results(min_topics, max_topics, costs, intertopic_similarities, interdo
 
     plt.suptitle(f"n_topics ({shape[0]} docs, {shape[1]} features, {g.N_GRAMS} n-grams) [{time}]")
     # plt.tight_layout()
-    plt.savefig(f"../output/{g.TABLE_NAME}/topic_search.png")
-    # plt.show()
+    plt.savefig(f"../output/topic_search.png")
+    return fig
 
 
 def main():
 
     g.get_command_line_options()
-    print(g.N_GRAMS)
 
     min_topics = 5
     max_topics = 160
 
     doc_ids, tfidf_corpus = get_cached_corpus(g.TABLE_NAME, "tfidf")
     time_start = time.time()
-    costs, intertopic_similarities, interdocument_similarities = search_models(tfidf_corpus, min_topics, max_topics, g.TABLE_NAME)
+    costs, intertopic_similarities, interdocument_similarities = search_models(tfidf_corpus, min_topics, max_topics)
     time_dif = datetime.timedelta(seconds=round(time.time() - time_start))
-    plot_results(min_topics, max_topics, costs, intertopic_similarities, interdocument_similarities, time_dif, tfidf_corpus.shape)
+    plot_results(min_topics, costs, intertopic_similarities, interdocument_similarities, time_dif, tfidf_corpus.shape)
+    plt.show()
 
 
 if __name__ == "__main__":

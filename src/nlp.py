@@ -76,6 +76,20 @@ def get_corpus_topic_strengths(W):
     return np.argsort(W, axis=1)[:, ::-1]
 
 
+def get_top_10_docs(W, topic):
+    """
+    Returns the top 10 documents for a topic
+    :param W: W from NMF.
+    :param topic: The topic index.
+    :return: List of tuples, the index of the best documents and their strength.
+    """
+
+    docs = np.argsort(W[:, topic].flatten())[::-1][:10]
+    strengths = W[:, topic].flatten()[docs]
+
+    return [(doc, strength) for doc, strength in zip(docs, strengths)]
+
+
 
 
 def dump_topic_corpus(corpus_topics, corpus, doc_ids):
@@ -169,23 +183,17 @@ def build_word_clouds(corpus_tfidf, corpus_topics, H, word_list, table_name):
 
 
 
-def nmf_model(corpus_tfidf, n_topics, table_name, model_from_pickle, max_iter=500, no_output=False):
+def nmf_model(corpus_tfidf, n_topics, max_iter=500, no_output=False):
 
-    if model_from_pickle and os.path.exists(f"../data/{table_name}/pickles/NMF.pkl"):
-        nmf = pickle_load(f"../data/{table_name}/pickles/NMF.pkl")
-        W = pickle_load(f"../data/{table_name}/pickles/NMF_W.pkl")
-        H = nmf.components_
+    if not no_output:
+        g.debug(f"Sorting corpus into {n_topics} topics...")
 
-    else:
-        if not no_output:
-            g.debug(f"Sorting corpus into {n_topics} topics...")
-        nmf = NMF(n_components=n_topics, max_iter=max_iter, random_state=666)
-        W = nmf.fit_transform(corpus_tfidf)
-        H = nmf.components_
+    nmf = NMF(n_components=n_topics, max_iter=max_iter, random_state=666)
+    W = nmf.fit_transform(corpus_tfidf)
+    H = nmf.components_
 
-        if not no_output:
-            g.debug(f" -> {nmf.n_iter_} iterations completed!", 1)
-
+    if not no_output:
+        g.debug(f" -> {nmf.n_iter_} iterations completed!", 1)
 
     return nmf, W, H
 
