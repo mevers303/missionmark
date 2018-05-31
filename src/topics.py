@@ -15,7 +15,7 @@ import datetime
 
 
 
-def search_models(tfidf_corpus, min_topics, max_topics, threshold=.1):
+def search_models(tfidf_corpus, min_topics, max_topics, threshold=.33):
 
     g.debug("Building NMF topics...")
     # nmf_models = []
@@ -33,7 +33,8 @@ def search_models(tfidf_corpus, min_topics, max_topics, threshold=.1):
             # nmf_models.append(nmf)
             costs.append(nmf.reconstruction_err_**2)
             intertopic_similarities.append(1 - pairwise_distances(H, metric="cosine", n_jobs=-1).mean())
-            interdocument_similarities.append(np.mean([1 - pairwise_distances(tfidf_corpus[W[:, topic_i].flatten() > threshold].A, metric="cosine", n_jobs=-1).mean() for topic_i in range(i) if (W[:, topic_i].flatten() > threshold).any()]))
+            W_normalized = W / W.max(axis=0)
+            interdocument_similarities.append(np.mean([1 - pairwise_distances(tfidf_corpus[W_normalized[:, topic_i] > threshold].A, metric="cosine", n_jobs=-1).mean() for topic_i in range(i) if (W_normalized[:, topic_i] > threshold).any()]))
 
             g.progress_bar(i - min_topics + 1, n_models, text=f"{nmf.n_iter_} iterations")
 

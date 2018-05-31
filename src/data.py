@@ -7,6 +7,7 @@ import os
 import psycopg2
 from bs4 import BeautifulSoup
 from bs4.element import Comment
+import numpy as np
 
 from globals import *
 
@@ -160,7 +161,7 @@ def get_query_corpus(query, remove_html):
 
     debug(f" -> {len(doc_ids)} documents loaded!", 1)
 
-    return doc_ids, corpus
+    return np.array(doc_ids), np.array(corpus)
 
 
 
