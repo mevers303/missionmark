@@ -98,12 +98,19 @@ def get_db_corpus(table_name, id_column, text_column, remove_html=False):
 
     with conn.cursor() as cursor:
 
+        # q = f"""
+        #        SELECT COUNT(*)
+        #        FROM import.{table_name}
+        #        WHERE LENGTH({text_column}) > {TEXT_COLUMN_MIN_LENGTH}
+        #          AND {id_column} IS NOT NULL
+        #     """
+
         q = f"""
                SELECT COUNT(*)
                FROM import.{table_name}
-               WHERE LENGTH({text_column}) > {TEXT_COLUMN_MIN_LENGTH}
-                 AND {id_column} IS NOT NULL
+               WHERE {text_column} LIKE('%REQUIREMENT%')
             """
+
 
         cursor.execute(q)
         n_docs = cursor.fetchone()[0]
@@ -116,8 +123,7 @@ def get_db_corpus(table_name, id_column, text_column, remove_html=False):
         q = f"""
                 SELECT {id_column}, {text_column}
                 FROM import.{table_name}
-                WHERE LENGTH({text_column}) > {TEXT_COLUMN_MIN_LENGTH}
-                  AND {id_column} IS NOT NULL
+                WHERE {text_column} LIKE('%REQUIREMENT%')
              """
 
         cursor.execute(q)
@@ -143,7 +149,7 @@ def get_db_corpus(table_name, id_column, text_column, remove_html=False):
 
 def get_query_corpus(query, remove_html):
 
-    conn = get_connection("missionmark_db_creds")
+    conn = get_connection("../missionmark_db_creds")
     debug("Loading corpus...")
 
     with conn.cursor(name="doc_getter") as cursor:
@@ -213,6 +219,7 @@ def strip_html(doc):
     texts = soup.findAll(text=True)
     visible_texts = filter(_tag_visible, texts)
     return " ".join(t.strip() for t in visible_texts)
+
 
 
 

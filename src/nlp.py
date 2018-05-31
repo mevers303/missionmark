@@ -201,7 +201,7 @@ def nmf_model(corpus_tfidf, n_topics, max_iter=500, no_output=False):
 
 def build_model_and_wordclouds(n_topics, tfidf_corpus, vocabulary, table_name):
 
-    nmf, W, H = nmf_model(tfidf_corpus, n_topics, table_name, False)
+    nmf, W, H = nmf_model(tfidf_corpus, n_topics, max_iter=666)
     pickle_dump(nmf, f"../data/{table_name}/pickles/NMF.pkl")
     pickle_dump(W, f"../data/{table_name}/pickles/W.pkl")
 

@@ -23,12 +23,15 @@ import os
 
 def get_stopwords():
     """
-    Reads the stopwords from stopwords.txt and combines them with the ENGLISH_STOP_WORDS in sklearn.
+    Reads the stopwords from stopwords_raw.txt and combines them with the ENGLISH_STOP_WORDS in sklearn.
     :return: A set of stopwords.
     """
 
-    with open("../stopwords.txt", "r") as f:
+    with open("../stopwords_raw.txt", "r") as f:
         custom_stopwords = {word[:-1] for word in f}
+
+    with open("../stopwords_full.txt", "r") as f:
+        custom_stopwords.update(tokenize(f.read()))
 
     return list(ENGLISH_STOP_WORDS.union(custom_stopwords))
 
@@ -40,7 +43,7 @@ def tokenize(text):
     :param text: The text/document to be tokenized.
     :return: A list of stemmed tokens.
     """
-    return [stemmer.stem(token) for token in re.split(r"[^a-zA-Z]+", text) if token]
+    return [stemmer.stem(token) for token in re.split(r"[^a-z]+", text) if token]
 
 
 
@@ -128,7 +131,7 @@ def cv_to_tfidf(cv_corpus, table_name, model_from_pickle):
 
 
 
-def tfidf_vectorize(corpus, table_name, model_from_pickle, input_type="content"):
+def tfidf_vectorize(corpus, table_name, model_from_pickle, input_type="content", split_requirements=True):
 
     count_vectorizer, cv_corpus = count_vectorize(corpus, table_name, model_from_pickle, input_type)
     vocabulary = count_vectorizer.get_feature_names()
@@ -136,6 +139,15 @@ def tfidf_vectorize(corpus, table_name, model_from_pickle, input_type="content")
 
     return tfidf_corpus, vocabulary
 
+
+
+def extract_requirements(doc):
+
+    sections = doc.split("REQUIREMENT")
+    if len(sections) > 1:
+        return " ".join(sections[1:])
+    else:
+        return sections[0]
 
 
 
@@ -184,7 +196,8 @@ def main():
     g.get_command_line_options()
 
     doc_ids, corpus = get_db_corpus(g.TABLE_NAME, g.ID_COLUMN, g.TEXT_COLUMN, remove_html=g.STRIP_HTML)
-    build_model_and_corpus_cache(doc_ids, corpus, g.TABLE_NAME)
+    corpus_requirements = [extract_requirements(doc) for doc in corpus]
+    build_model_and_corpus_cache(doc_ids, corpus_requirements, g.TABLE_NAME)
 
 
 if __name__ == "__main__":
