@@ -8,6 +8,7 @@ import psycopg2
 from bs4 import BeautifulSoup
 from bs4.element import Comment
 import numpy as np
+import re
 
 from globals import *
 
@@ -215,7 +216,21 @@ def _tag_visible(element):
 
 
 def strip_html(doc):
+
     soup = BeautifulSoup(doc, 'html.parser')
+
+    for strong in soup.find_all("strong"):
+        text = strong.text
+        if len(text) < 69:
+            text = re.sub(r"(?i)requirement", "REQUIREMENT", text)
+            strong.replace_with(text)
+
+    for strong in soup.find_all("h4"):
+        text = strong.text
+        if len(text) < 69:
+            text = re.sub(r"(?i)requirement", "REQUIREMENT", text)
+            strong.replace_with(text)
+
     texts = soup.findAll(text=True)
     visible_texts = filter(_tag_visible, texts)
     return " ".join(t.strip() for t in visible_texts)

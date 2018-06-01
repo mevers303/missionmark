@@ -77,7 +77,7 @@ def count_vectorize(corpus, table_name, model_from_pickle, input_type="content")
 
     else:
         g.debug("Vectorizing documents...")
-        count_vectorizer = CountVectorizerProgressBar(input=input_type, max_features=g.MAX_FEATURES, min_df=g.MIN_DF, max_df=g.MAX_DF, stop_words=get_stopwords(), tokenizer=tokenize, ngram_range=(1, g.N_GRAMS), strip_accents="ascii", dtype=np.uint16, progress_bar_clear=True)
+        count_vectorizer = CountVectorizerProgressBar(input=input_type, max_features=g.MAX_FEATURES, min_df=g.MIN_DF, max_df=g.MAX_DF, stop_words=get_stopwords(), tokenizer=tokenize, ngram_range=(1, g.N_GRAMS), strip_accents="ascii", dtype=np.uint16, progress_bar_clear_when_done=True)
         cv_corpus = count_vectorizer.fit_transform(corpus)
         count_vectorizer.stop_words_ = None  # we can delete this to take up less memory (useful for pickling)
         g.debug(" -> Done!", 1)
@@ -131,7 +131,7 @@ def cv_to_tfidf(cv_corpus, table_name, model_from_pickle):
 
 
 
-def tfidf_vectorize(corpus, table_name, model_from_pickle, input_type="content", split_requirements=True):
+def tfidf_vectorize(corpus, table_name, model_from_pickle, input_type="content"):
 
     count_vectorizer, cv_corpus = count_vectorize(corpus, table_name, model_from_pickle, input_type)
     vocabulary = count_vectorizer.get_feature_names()
@@ -145,9 +145,12 @@ def extract_requirements(doc):
 
     sections = doc.split("REQUIREMENT")
     if len(sections) > 1:
-        return " ".join(sections[1:])
+        result = "REQUIREMENT".join(sections[1:])
     else:
-        return sections[0]
+        result = sections[0]
+
+    result = result.split("BACKGROUND")[0]
+    return result
 
 
 
