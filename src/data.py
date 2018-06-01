@@ -208,7 +208,7 @@ def check_corpus_pickles(table_name):
 
 
 def _tag_visible(element):
-    if element.parent.name in ['style', 'script', 'head', 'title', 'meta', '[document]']:
+    if element.parent.name in ['style', 'script', 'head', 'meta']:
         return False
     if isinstance(element, Comment):
         return False
@@ -225,15 +225,16 @@ def strip_html(doc):
             text = re.sub(r"(?i)requirement", "REQUIREMENT", text)
             strong.replace_with(text)
 
-    for strong in soup.find_all("h4"):
-        text = strong.text
+    for h4 in soup.find_all("h4"):
+        text = h4.text
         if len(text) < 69:
             text = re.sub(r"(?i)requirement", "REQUIREMENT", text)
-            strong.replace_with(text)
+            h4.replace_with(text)
 
     texts = soup.findAll(text=True)
     visible_texts = filter(_tag_visible, texts)
-    return " ".join(t.strip() for t in visible_texts)
+    result = " ".join(t.strip() for t in visible_texts)
+    return result
 
 
 
@@ -243,4 +244,5 @@ def strip_html(doc):
 if __name__ == "__main__":
 
     # cache_corpus("govwin_opportunity", "opportunity_id", "program_description", remove_html=True)
-    cache_corpus("fbo_files", "id", "text", remove_html=False)
+    # cache_corpus("fbo_files", "id", "text", remove_html=False)
+    get_query_corpus("SELECT opportunity_id, program_description FROM import.govwin_opportunity WHERE opportunity_id = 115135;", True)
