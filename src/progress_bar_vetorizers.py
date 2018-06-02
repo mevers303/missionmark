@@ -8,7 +8,66 @@ import time
 
 
 
-class CountVectorizerProgressBar(CountVectorizer):
+
+class ProgressBarVectorizer():
+    """
+        Base class containing the progress bar functions.  Inherited by child
+        classes in conjunction with the scikit-learn classes.
+    """
+
+    def __init__(resolution_seconds, clear_when_done):
+
+        self._n_docs = 0
+        self._completed_docs = 0
+        self._last_time = 0
+        self._resolution_seconds = resolution_seconds
+        self._clear_when_done = clear_when_done
+
+
+    def _analyzer_with_progress_bar(self, analyzer, doc):
+        result = analyzer(doc)
+        self._completed_docs += 1
+        self._progress_bar()
+        return result
+
+
+    def _start_progress(self, n_docs):
+        self._n_docs = n_docs
+        self._completed_docs = 0
+        self.progress_bar()
+
+
+    def _progress_bar(self):
+
+        if not self._n_docs:
+            return
+
+        time_now = time.time()
+        if time_now - self._last_time < self._resolution_seconds and self._completed_docs < self._n_docs:
+            return
+
+        # percentage done
+        percentage = int(self._completed_docs / self._n_docs * 100)
+
+        stdout.write('\r')
+        # print the progress bar
+        stdout.write("[{}]{}%".format(("-" * int(percentage / 2) + (">" if percentage < 100 else "")).ljust(50), str(percentage).rjust(4)))
+        # print the text figures
+        stdout.write(" ({}/{})".format(self._completed_docs, self._n_docs).rjust(14))
+        stdout.flush()
+
+        if percentage == 100 and self._clear_when_done:
+            # print("\n")
+            stdout.write('\r')
+            stdout.write(' ' * 80)
+            stdout.write('\r')
+
+        self._last_time = time_now
+
+
+
+
+class CountVectorizerProgressBar(CountVectorizer, ProgressBarVectorizer):
     """
         scikit-learn's CountVectorizer object, but it displays a progress bar when fitting/transforming!
         Author : Mark Evers
@@ -143,81 +202,36 @@ class CountVectorizerProgressBar(CountVectorizer):
                  analyzer="word", max_df=1.0, min_df=1, max_features=None, vocabulary=None, binary=False,
                  dtype=numpy.int64, progress_bar_resolution_seconds=.333, progress_bar_clear_when_done=False):
 
-        super().__init__(input=input, encoding=encoding, decode_error=decode_error, strip_accents=strip_accents,
-                         lowercase=lowercase, preprocessor=preprocessor, tokenizer=tokenizer, stop_words=stop_words,
-                         token_pattern=token_pattern, ngram_range=ngram_range, analyzer=analyzer, max_df=max_df,
-                         min_df=min_df, max_features=max_features, vocabulary=vocabulary, binary=binary, dtype=dtype)
-        self._n_docs = 0
-        self._completed_docs = 0
-        self._progress_bar_last_time = 0
-        self._progress_bar_resolution_seconds = progress_bar_resolution_seconds
-        self._progress_bar_clear_when_done = progress_bar_clear_when_done
+        CountVectorizer.__init__(self, input=input, encoding=encoding, decode_error=decode_error, strip_accents=strip_accents,
+                                 lowercase=lowercase, preprocessor=preprocessor, tokenizer=tokenizer, stop_words=stop_words,
+                                 token_pattern=token_pattern, ngram_range=ngram_range, analyzer=analyzer, max_df=max_df,
+                                 min_df=min_df, max_features=max_features, vocabulary=vocabulary, binary=binary, dtype=dtype)
 
-
-    def _analyzer_with_progress_bar(self, analyzer, doc):
-        result = analyzer(doc)
-        self._completed_docs += 1
-        self.progress_bar()
-        return result
+        ProgressBarVectorizer.__init__(self, progress_bar_resolution_seconds, progress_bar_clear_when_done)
 
 
     def build_analyzer(self):
-        analyzer = super().build_analyzer()
-        return lambda doc: self._analyzer_with_progress_bar(analyzer, doc)
+        return lambda doc: self._analyzer_with_progress_bar(super().build_analyzer(), doc)
 
 
     def fit(self, raw_documents, y=None):
-        self._n_docs = len(raw_documents)
-        self._completed_docs = 0
-        self.progress_bar()
+        super()._start_progress(len(raw_documents))
         return super().fit(raw_documents, y=y)
 
 
     def fit_transform(self, raw_documents, y=None):
-        self._n_docs = len(raw_documents)
-        self._completed_docs = 0
-        self.progress_bar()
+        super()._start_progress(len(raw_documents))
         return super().fit_transform(raw_documents, y=y)
 
 
     def transform(self, raw_documents):
-        self._n_docs = len(raw_documents)
-        self._completed_docs = 0
-        self.progress_bar()
+        super()._start_progress(len(raw_documents))
         return super().transform(raw_documents)
 
 
-    def progress_bar(self):
-
-        if not self._n_docs:
-            return
-
-        time_now = time.time()
-        if time_now - self._progress_bar_last_time < self._progress_bar_resolution_seconds and self._completed_docs < self._n_docs:
-            return
-
-        # percentage done
-        percentage = int(self._completed_docs / self._n_docs * 100)
-
-        stdout.write('\r')
-        # print the progress bar
-        stdout.write("[{}]{}%".format(("-" * int(percentage / 2) + (">" if percentage < 100 else "")).ljust(50), str(percentage).rjust(4)))
-        # print the text figures
-        stdout.write(" ({}/{})".format(self._completed_docs, self._n_docs).rjust(14))
-        stdout.flush()
-
-        if percentage == 100 and self._progress_bar_clear_when_done:
-            # print("\n")
-            stdout.write('\r')
-            stdout.write(' ' * 80)
-            stdout.write('\r')
-
-        self._progress_bar_last_time = time_now
 
 
-
-
-class TfidfVectorizerProgressBar(TfidfVectorizer):
+class TfidfVectorizerProgressBar(TfidfVectorizer, ProgressBarVectorizer):
     """
         scikit-learn's TfidfVectorizer object, but it displays a progress bar when fitting/transforming!
         Author : Mark Evers
@@ -365,74 +379,29 @@ class TfidfVectorizerProgressBar(TfidfVectorizer):
                  dtype=numpy.int64, norm="l2", use_idf=True, smooth_idf=True, sublinear_tf=False,
                  progress_bar_resolution_seconds=.333, progress_bar_clear_when_done=False):
 
-        super().__init__(input=input, encoding=encoding, decode_error=decode_error, strip_accents=strip_accents,
+        TfidfVectorizer.__init__(self, input=input, encoding=encoding, decode_error=decode_error, strip_accents=strip_accents,
                          lowercase=lowercase, preprocessor=preprocessor, tokenizer=tokenizer, stop_words=stop_words,
                          token_pattern=token_pattern, ngram_range=ngram_range, analyzer=analyzer, max_df=max_df,
                          min_df=min_df, max_features=max_features, vocabulary=vocabulary, binary=binary, dtype=dtype,
                          norm=norm, use_idf=use_idf, smooth_idf=smooth_idf, sublinear_tf=sublinear_tf)
-        self._n_docs = 0
-        self._completed_docs = 0
-        self._progress_bar_last_time = 0
-        self._progress_bar_resolution_seconds = progress_bar_resolution_seconds
-        self._progress_bar_clear_when_done = progress_bar_clear_when_done
 
-
-    def _analyzer_with_progress_bar(self, analyzer, doc):
-        result = analyzer(doc)
-        self._completed_docs += 1
-        self.progress_bar()
-        return result
+        ProgressBarVectorizer.__init__(self, progress_bar_resolution_seconds, progress_bar_clear_when_done)
 
 
     def build_analyzer(self):
-        analyzer = super().build_analyzer()
-        return lambda doc: self._analyzer_with_progress_bar(analyzer, doc)
+        return lambda doc: self._analyzer_with_progress_bar(super().build_analyzer(), doc)
 
 
     def fit(self, raw_documents, y=None):
-        self._n_docs = len(raw_documents)
-        self._completed_docs = 0
-        self.progress_bar()
+        super()._start_progress(len(raw_documents))
         return super().fit(raw_documents, y=y)
 
 
     def fit_transform(self, raw_documents, y=None):
-        self._n_docs = len(raw_documents)
-        self._completed_docs = 0
-        self.progress_bar()
+        super()._start_progress(len(raw_documents))
         return super().fit_transform(raw_documents, y=y)
 
 
     def transform(self, raw_documents, copy=True):
-        self._n_docs = len(raw_documents)
-        self._completed_docs = 0
-        self.progress_bar()
-        return super().transform(raw_documents)
-
-
-    def progress_bar(self):
-
-        if not self._n_docs:
-            return
-
-        time_now = time.time()
-        if time_now - self._progress_bar_last_time < self._progress_bar_resolution_seconds and self._completed_docs < self._n_docs:
-            return
-
-        # percentage done
-        percentage = int(self._completed_docs / self._n_docs * 100)
-
-        stdout.write('\r')
-        # print the progress bar
-        stdout.write("[{}]{}%".format(("-" * int(percentage / 2) + (">" if percentage < 100 else "")).ljust(50), str(percentage).rjust(4)))
-        # print the text figures
-        stdout.write(" ({}/{})".format(self._completed_docs, self._n_docs).rjust(14))
-        stdout.flush()
-
-        if percentage == 100 and self._progress_bar_clear_when_done:
-            # print("\n")
-            stdout.write('\r')
-            stdout.write(' ' * 80)
-            stdout.write('\r')
-
-        self._progress_bar_last_time = time_now
+        super()._start_progress(len(raw_documents))
+        return super().transform(raw_documents, copy=copy)

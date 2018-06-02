@@ -217,24 +217,23 @@ def _tag_visible(element):
 
 def strip_html(doc):
 
+    if not doc:
+        return ""
+
     soup = BeautifulSoup(doc, 'html.parser')
+    pattern = re.compile(r"(?i)requirement")
 
-    for strong in soup.find_all("strong"):
-        text = strong.text
-        if len(text) < 69:
-            text = re.sub(r"(?i)requirement", "REQUIREMENT", text)
-            strong.replace_with(text)
+    # for tag in soup.find_all(["strong", "h4", "h3", "h2", "b"]):
+    #     tag.replace_with(pattern.sub("REQUIREMENT", tag.text))
 
-    for h4 in soup.find_all("h4"):
-        text = h4.text
-        if len(text) < 69:
-            text = re.sub(r"(?i)requirement", "REQUIREMENT", text)
-            h4.replace_with(text)
+    for text in soup.find_all(text=pattern):
+        s = str(text)
+        if len(s) < 69:
+            text.replace_with(pattern.sub("REQUIREMENT", s))
 
-    texts = soup.findAll(text=True)
-    visible_texts = filter(_tag_visible, texts)
-    result = " ".join(t.strip() for t in visible_texts)
-    return result
+
+    text = [str(s).strip() for s in soup.findAll(text=True) if _tag_visible(s)]
+    return " ".join(text)
 
 
 

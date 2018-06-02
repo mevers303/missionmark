@@ -143,14 +143,19 @@ def tfidf_vectorize(corpus, table_name, model_from_pickle, input_type="content")
 
 def extract_requirements(doc):
 
-    sections = doc.split("REQUIREMENT")
-    if len(sections) > 1:
-        result = "REQUIREMENT".join(sections[1:])
-    else:
-        result = sections[0]
+    i = doc.find("REQUIREMENT")
+    if i > -1:
+        doc = doc[i:]
 
-    result = result.split("BACKGROUND")[0]
-    return result
+    i = doc.find("BACKGROUND")
+    if i > -1:
+        doc = doc[:i]
+
+    i = doc.find("SUMMARY")
+    if i > -1:
+        doc = doc[:i]
+
+    return doc
 
 
 
