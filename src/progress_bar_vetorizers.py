@@ -221,21 +221,22 @@ class CountVectorizerProgressBar(CountVectorizer, ProgressBarVectorizer):
 
 
     def build_analyzer(self):
-        return lambda doc: self._analyzer_with_progress_bar(super().build_analyzer(), doc)
+        analyzer = super().build_analyzer()
+        return lambda doc: self._analyzer_with_progress_bar(analyzer, doc)
 
 
     def fit(self, raw_documents, y=None):
-        super()._start_progress(len(raw_documents))
+        self._start_progress(len(raw_documents))
         return super().fit(raw_documents, y=y)
 
 
     def fit_transform(self, raw_documents, y=None):
-        super()._start_progress(len(raw_documents))
+        self._start_progress(len(raw_documents))
         return super().fit_transform(raw_documents, y=y)
 
 
     def transform(self, raw_documents):
-        super()._start_progress(len(raw_documents))
+        self._start_progress(len(raw_documents))
         return super().transform(raw_documents)
 
 
@@ -398,19 +399,20 @@ class TfidfVectorizerProgressBar(TfidfVectorizer, ProgressBarVectorizer):
 
 
     def build_analyzer(self):
-        return lambda doc: self._analyzer_with_progress_bar(super().build_analyzer(), doc)
+        analyzer = super().build_analyzer()
+        return lambda doc: self._analyzer_with_progress_bar(analyzer, doc)
 
 
     def fit(self, raw_documents, y=None):
-        super()._start_progress(len(raw_documents))
+        self._start_progress(len(raw_documents))
         return super().fit(raw_documents, y=y)
 
 
     def fit_transform(self, raw_documents, y=None):
-        super()._start_progress(len(raw_documents))
+        self._start_progress(len(raw_documents))
         return super().fit_transform(raw_documents, y=y)
 
 
     def transform(self, raw_documents, copy=True):
-        super()._start_progress(len(raw_documents))
+        self._start_progress(len(raw_documents))
         return super().transform(raw_documents, copy=copy)

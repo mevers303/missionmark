@@ -109,7 +109,7 @@ def get_db_corpus(table_name, id_column, text_column, remove_html=False):
         q = f"""
                SELECT COUNT(*)
                FROM import.{table_name}
-               WHERE {text_column} LIKE('%REQUIREMENT%')
+               WHERE {text_column} ILIKE('%REQUIREMENTS%')
             """
 
 
@@ -124,7 +124,7 @@ def get_db_corpus(table_name, id_column, text_column, remove_html=False):
         q = f"""
                 SELECT {id_column}, {text_column}
                 FROM import.{table_name}
-                WHERE {text_column} LIKE('%REQUIREMENT%')
+                WHERE {text_column} ILIKE('%REQUIREMENTS%')
              """
 
         cursor.execute(q)
