@@ -250,4 +250,4 @@ if __name__ == "__main__":
 
     # cache_corpus("govwin_opportunity", "opportunity_id", "program_description", remove_html=True)
     # cache_corpus("fbo_files", "id", "text", remove_html=False)
-    get_query_corpus("SELECT opportunity_id, program_description FROM import.govwin_opportunity WHERE opportunity_id = 115135;", True)
+    corpus = get_query_corpus("SELECT opportunity_id, program_description FROM import.govwin_opportunity WHERE opportunity_id = 115135;", True)
