@@ -221,19 +221,25 @@ def strip_html(doc):
         return ""
 
     soup = BeautifulSoup(doc, 'html.parser')
-    pattern = re.compile(r"(?i)requirement")
+    pattern = re.compile(r"(?i)requirements")
+    result = []
 
-    # for tag in soup.find_all(["strong", "h4", "h3", "h2", "b"]):
-    #     tag.replace_with(pattern.sub("REQUIREMENT", tag.text))
+    for text_element in soup.find_all(text=True):
 
-    for text in soup.find_all(text=pattern):
-        s = str(text)
+        if not _tag_visible(text_element):
+            continue
+
+        s = str(text_element).strip()
+        if not s:
+            continue
+
         if len(s) < 69:
-            text.replace_with(pattern.sub("REQUIREMENT", s))
+            result.append(pattern.sub("REQUIREMENTS", s))
+        else:
+            result.append(s)
 
 
-    text = [str(s).strip() for s in soup.findAll(text=True) if _tag_visible(s)]
-    return " ".join(text)
+    return "\n".join(result)
 
 
 
