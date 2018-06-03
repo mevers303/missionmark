@@ -84,7 +84,7 @@ def get_top_10_docs(W, topic):
     :return: List of tuples, the index of the best documents and their strength.
     """
 
-    docs = np.argsort(W[:, topic].flatten())[::-1][:10]
+    docs = np.argsort(W[:, topic])[::-1][:10]
     strengths = W[:, topic].flatten()[docs]
 
     return [(doc, strength) for doc, strength in zip(docs, strengths)]
