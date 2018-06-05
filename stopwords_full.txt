@@ -12,7 +12,6 @@ dod
 the contractor shall furnish all necessary supervision labor equipment materials travel
 typical task orders will include but will not be limited to
 requirements
-services
 request
 completed
 time
@@ -34,7 +33,7 @@ may have a continuing requirement
 continuous
 agency
 disa
-Citizenship and Immigration Services (USCIS)
+USCIS
 Air Forces Central (USCENTAF)
 veterans affairs (va)
 Buckley Air Force Base
@@ -52,7 +51,40 @@ follow
 perform
 office
 meet
-The contractor shall provide services to meet the following
+The contractor shall provide to meet the following
 Provide all labor (including supervision), material, equipment, and whatever else may be needed, except as otherwise provided herein
 proceed
 Fort Bragg, North Carolina
+command
+incentive
+incentives
+availability
+proposed
+day
+review
+attachment
+customer
+outcome
+objective
+proposal
+qualifications
+employee
+work
+workplace
+confidence
+satisfactory
+unsatisfactory
+price
+proposal
+report
+year
+release
+holiday
+subcontractor
+subcontract
+subcontracted
+contracted
+Air Force Materiel Command
+Air Force Life Cycle Management Center
+Division
+nasa

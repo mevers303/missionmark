@@ -162,7 +162,7 @@ def build_word_clouds(corpus_tfidf, corpus_topics, H, word_list, table_name):
     for topic_i in range(n_topics):
 
         # nmf wordcloud
-        wc = WordCloud(background_color="black", max_words=666, width=2000, height=1000)
+        wc = WordCloud(background_color="black", max_words=333, width=1000, height=500)
         wc.fit_words({word_list[word_i]: H[topic_i, word_i] for word_i in topic_top_nmf_words_i[topic_i] if H[topic_i, word_i]})
         wc.to_file(f"../output/{table_name}/nmf/{topic_i}_nmf_wordcloud.png")
 
@@ -171,7 +171,7 @@ def build_word_clouds(corpus_tfidf, corpus_topics, H, word_list, table_name):
             continue
 
         # tf-idf wordcloud
-        wc = WordCloud(background_color="black", max_words=666, width=2000, height=1000)
+        wc = WordCloud(background_color="black", max_words=333, width=1000, height=500)
         wc.fit_words({word_list[word_i]: topic_tfidf_weights[topic_i, word_i] for word_i in topic_top_tfidf_words_i[topic_i] if topic_tfidf_weights[topic_i, word_i]})
         wc.to_file(f"../output/{table_name}/nmf/{topic_i}_tfidf_wordcloud.png")
 
