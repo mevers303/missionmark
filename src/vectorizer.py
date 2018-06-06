@@ -28,10 +28,10 @@ def get_stopwords():
     """
 
     with open("../stopwords_raw.txt", "r") as f:
-        custom_stopwords = {word[:-1] for word in f}
+        custom_stopwords = {word.lower()[:-1] for word in f}
 
     with open("../stopwords_full.txt", "r") as f:
-        custom_stopwords.update(tokenize(f.read()))
+        custom_stopwords.update(tokenize(f.read().lower()))
 
     return list(ENGLISH_STOP_WORDS.union(custom_stopwords))
 
