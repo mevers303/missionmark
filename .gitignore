@@ -8,4 +8,7 @@ missionmark_db_creds
 static/wordclouds/
 src/.ipynb_checkpoints/
 *wordcloud.png
+jupyter/output_*
+jupyter/*.tex
+jupyter/.ipynb_checkpoints/
 
