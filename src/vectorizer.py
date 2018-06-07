@@ -46,7 +46,7 @@ def tokenize(text):
     :return: A list of stemmed tokens.
     """
     global stemmer, stop_phrases
-    text = stop_phrases.sub("", text)
+    text = stop_phrases.sub(" ", text)
     return [stemmer.stem(token) for token in re.split(r"[^a-z]+", text) if len(token) > 3]
 
 
