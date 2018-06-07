@@ -1098,3 +1098,5 @@ Vendor Pay
 The contractor shall:
 NAVFAC
 except as otherwise specified
+items and services
+national
