@@ -19,6 +19,11 @@ import numpy as np
 import os
 
 
+stop_phrases = None
+with open("../stopwords_phrases.txt", "r") as f:
+    stop_phrases = set([re.escape(line.lower().strip()) for line in f])
+with open("../stopwords_regex.txt", "r") as f:
+    stop_phrases.update([line.lower().strip() for line in f])
 
 
 def get_stopwords():
@@ -27,11 +32,8 @@ def get_stopwords():
     :return: A set of stopwords.
     """
 
-    with open("../stopwords_raw.txt", "r") as f:
-        custom_stopwords = {word.lower()[:-1] for word in f}
-
-    with open("../stopwords_full.txt", "r") as f:
-        custom_stopwords.update(tokenize(f.read().lower()))
+    with open("../stopwords_tokenize.txt", "r") as f:
+        custom_stopwords = set(tokenize(f.read().lower()))
 
     return list(ENGLISH_STOP_WORDS.union(custom_stopwords))
 
@@ -43,7 +45,9 @@ def tokenize(text):
     :param text: The text/document to be tokenized.
     :return: A list of stemmed tokens.
     """
-    return [stemmer.stem(token) for token in re.split(r"[^a-z]+", text) if token]
+    global stemmer, stop_phrases
+    text = stop_phrases.sub("", text)
+    return [stemmer.stem(token) for token in re.split(r"[^a-z]+", text) if len(token) > 3]
 
 
 
