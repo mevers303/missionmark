@@ -1,0 +1,2 @@
+The contractor shall (provide|furnish) all ([a-zA-Z0-9]+, )+[a-zA-Z0-9]+,* and [a-z]
+([A-Z][a-z]+)( [A-Z][a-z]+)*, [A-Z]{2}

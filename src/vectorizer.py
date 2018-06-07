@@ -21,9 +21,10 @@ import os
 
 stop_phrases = None
 with open("../stopwords_phrases.txt", "r") as f:
-    stop_phrases = set([re.escape(line.lower().strip()) for line in f])
+    stop_phrases = set([re.escape(line.lower().strip()) for line in f if len(line) > 3])
 with open("../stopwords_regex.txt", "r") as f:
-    stop_phrases.update([line.lower().strip() for line in f])
+    stop_phrases.update([line.lower().strip() for line in f if len(line) > 3])
+stop_phrases = re.compile("|".join(stop_phrases))
 
 
 def get_stopwords():
