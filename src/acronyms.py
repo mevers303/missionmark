@@ -6,14 +6,15 @@
 
 import re
 import string
-from nlp import split_sentences
-from globals import *
+from summaries import split_sentences
+import globals as g
+from data import get_db_corpus
 
 # These constants are for when it has to search for the acronym
 UNMATCHED_ACRONYM_FIRSTLETTER_SEARCH_LEN = 5  # how many words before the believed first word to search
 UNMATCHED_ACRONYM_CAPITALS_SEARCH_LEN = 7  # how many capitalized letters to include when above doesn't work
 MAX_ACRONYM_LEN = 7  # any longer than this will be ignored
-DEBUG_LEVEL = 0
+g.debug_LEVEL = 0
 
 
 
@@ -77,9 +78,9 @@ def print_acronyms(acronyms):
     :return: None
     """
 
-    debug("\nACRONYM DICTIONARY")
+    g.debug("\nACRONYM DICTIONARY")
     for k, v in acronyms.items():
-        debug(f"{k}:".ljust(10) + v)
+        g.debug(f"{k}:".ljust(10) + v)
 
 
 
@@ -239,13 +240,13 @@ def parse_acronym(acronym, acronym_i, tokens):
         search_result = capital_words_search(acronym_i, tokens)
 
     if not search_result:
-        debug(f"WARNING -> Acronym does not match: {acronym}", 2)
-        # debug(f" !!!!!! -> Could not find a good match, keeping original: {definition_tokens}", 3)
+        g.debug(f"WARNING -> Acronym does not match: {acronym}", 2)
+        # g.debug(f" !!!!!! -> Could not find a good match, keeping original: {definition_tokens}", 3)
         # return " ".join(definition_tokens)
         return False
     else:
-        debug(f"WARNING -> Acronym does not match: {acronym}", 3)
-        debug(f"     OK -> Best match: {search_result}", 3)
+        g.debug(f"WARNING -> Acronym does not match: {acronym}", 3)
+        g.debug(f"     OK -> Best match: {search_result}", 3)
         return " ".join(search_result)
 
 
@@ -283,13 +284,13 @@ def acronyms_from_sentence(sentence):
 
         else:
 
-            if DEBUG_LEVEL > 2:
+            if g.debug_LEVEL > 2:
                 match_obj = re.match(r"\((.+)\)", token)
                 if match_obj:
                     # inside_parens = match_obj.group(1)
                     # if not re.match(r"[0-9\.%#\-]+|\.[a-zA-Z]{3,4}|[a-z]{2,5}\.", inside_parens): # numbers and some special chars OR file extensions
                     #     print("Unknown parentheses:", token)
-                    debug(f"Unknown parenteses: {token}", 4)
+                    g.debug(f"Unknown parenteses: {token}", 4)
 
 
     return acronyms
@@ -321,11 +322,19 @@ def main():
     :return: None
     """
 
-    with open("scratch.txt", "r") as f:
-        doc = f.read()
+    doc_ids, corpus = get_db_corpus(g.TABLE_NAME, g.ID_COLUMN, g.TEXT_COLUMN, remove_html=g.STRIP_HTML)
 
-    acronyms = acronyms_from_doc(doc)
-    print_acronyms(acronyms)
+    acronyms = {}
+    for doc in corpus:
+        add_multiple_to_acronyms(acronyms, acronyms_from_doc(doc))
+
+    for key, v in acronyms.items():
+        if "(" in key:
+            key = key[:key.find("(")]
+        open("acronyms.txt", "a").write(key + "\n")
+        open("definitions.txt", "a").write(v + "\n")
+
+
 
 
 

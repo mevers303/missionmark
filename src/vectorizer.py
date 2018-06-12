@@ -206,8 +206,8 @@ def main():
     g.get_command_line_options()
 
     doc_ids, corpus = get_db_corpus(g.TABLE_NAME, g.ID_COLUMN, g.TEXT_COLUMN, remove_html=g.STRIP_HTML)
-    corpus_requirements = [extract_requirements(doc) for doc in corpus]
-    build_model_and_corpus_cache(doc_ids, corpus_requirements, g.TABLE_NAME)
+    # corpus_requirements = [extract_requirements(doc) for doc in corpus]
+    build_model_and_corpus_cache(doc_ids, corpus, g.TABLE_NAME)
 
 
 if __name__ == "__main__":
